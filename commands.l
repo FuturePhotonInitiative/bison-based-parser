@@ -24,7 +24,7 @@ ad	|
 adc	 { yylval.command_code = 1; return ADC_CMD; }
 
 al	|
-all	 { yylval.command_code = ALL_PIN; return PETB_PIN; }
+all	 { return ALL_PORT; }
 
 b    |
 be   |
@@ -59,19 +59,8 @@ gpio	 { return GPIO; }
 ii	|
 iic		{ return IIC; }
 
-i2cr	|
-i2cre	|
-i2crea	|
-i2cread	 { yylval.command_code = 3; return I2CREAD_CMD; }
-
-i2cw	|
-i2cwr	|
-i2cwri	|
-i2cwrit	|
-i2cwrite	 { yylval.command_code = 4; return I2CWRITE_CMD; }
-
 in	|
-int	 { yylval.command_code = INT_PIN; return PETB_PIN; }
+int	 { yylval.command_code = GPIO_PORT_INT; return GPIO_PORT; }
 
 li	|
 lis	|
@@ -81,27 +70,26 @@ lp	|
 lpm	|
 lpmo	|
 lpmod	|
-lpmode	 { yylval.command_code = LPMODE_PIN; return PETB_PIN; }
+lpmode	 { yylval.command_code = GPIO_PORT_LPMODE; return GPIO_PORT; }
 
 modp	|
 modpr	|
-modprs	 { yylval.command_code = MODPRS_PIN; return PETB_PIN; }
+modprs	 { yylval.command_code = GPIO_PORT_MODPRS; return GPIO_PORT; }
 
 mods	|
 modse	|
-modsel	 { yylval.command_code = MODSEL_PIN; return PETB_PIN; }
+modsel	 { yylval.command_code = GPIO_PORT_MODSEL; return GPIO_PORT; }
 
 pek	 { yylval.command_code = 5; return PEK_CMD; }
 
-pet	|
-petb	 { yylval.command_code = 6; return PETB_CMD; }
+qsfp	 { yylval.command_code = 6; return QSFP_CMD; }
 
 rea	|
 read	 { yylval.command_code = GPIO_READ; return READ; }
 
 res	|
 rese	|
-reset	 { yylval.command_code = RESET_PIN; return PETB_PIN; }
+reset	 { yylval.command_code = GPIO_PORT_RESET; return GPIO_PORT; }
 
 se	|
 set	 { yylval.command_code = GPIO_SET; return SET; }
@@ -129,17 +117,26 @@ write	 { yylval.command_code = GPIO_WRITE; return WRITE; }
 
 cfp { yylval.command_code = 9; return CFP_CMD; }
 
-(0x)?[0-9a-fA-F]*       { 
-                        long tmp = strtol(yytext, NULL, 0);
-                        if(tmp >= 0 && tmp < 256)
-                        {
-                                yylval.num = tmp;
-                                return NUMBER;
-                        }
-                        strncpy(yylval.str, yytext, MAX_ARGS);
-                        yylval.str[MAX_ARGS-1] = '\0';
-                        return STR; 
-                        } 
+vcu108 { yylval.command_code = 10; return VCU108_CMD; }
+
+leds { yylval.command_code = VCU108_PORT_LEDS; return VCU108_READ_PORT; }
+
+buttons { yylval.command_code = VCU108_PORT_BUTTONS; return VCU108_READ_PORT; }
+
+switches { yylval.command_code = VCU108_PORT_SWITCHES; return VCU108_READ_PORT; }
+
+
+(0x)?[0-9a-fA-F]* { 
+    long tmp = strtol(yytext, NULL, 0);
+    if (tmp >= 0 && tmp < 256) {
+        yylval.num = tmp;
+        return NUMBER;
+    }
+    strncpy(yylval.str, yytext, MAX_ARGS);
+    yylval.str[MAX_ARGS-1] = '\0';
+    return STR; 
+} 
+
 [ \r\t] ;/*Ignore whitespace*/
 
 [^ \t\n]* { strncpy(yylval.str, yytext, MAX_ARGS); yylval.str[MAX_ARGS-1] = '\0'; return STR; }
@@ -150,15 +147,13 @@ cfp { yylval.command_code = 9; return CFP_CMD; }
 
 YY_BUFFER_STATE currentString;
 
-void _setupLexInput(char* inputBuffer)
-{
+void _setupLexInput(char* inputBuffer) {
         yy_delete_buffer(YY_CURRENT_BUFFER);
         currentString = yy_scan_string(inputBuffer);
         BEGIN(INITIAL);
 }
 
-void _cleanupLex()
-{
+void _cleanupLex() {
         yy_delete_buffer(currentString);
 }
 

@@ -10,17 +10,21 @@
 #define GPIO_TOGGLE 5
 #define GPIO_WRITE 6
 
-#define ALL_PIN 1
-#define INT_PIN 2
-#define LPMODE_PIN 3
-#define MODPRS_PIN 4
-#define MODSEL_PIN 5
-#define RESET_PIN 6
+#define GPIO_PORT_MODSEL 1
+#define GPIO_PORT_RESET 2
+#define GPIO_PORT_MODPRS 3
+#define GPIO_PORT_INT 4
+#define GPIO_PORT_ALL 5
 
-typedef struct command{
+#define VCU108_PORT_LEDS 1
+#define VCU108_PORT_BUTTONS 2
+#define VCU108_PORT_SWITCHES 3
+#define VCU108_PORT_ALL 4
+
+typedef struct command {
 	unsigned char command_code;
 	unsigned char args_len;
 	unsigned char args[MAX_ARGS];
-}command;
+} command;
 
 #endif

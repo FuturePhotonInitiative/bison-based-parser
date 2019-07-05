@@ -27,17 +27,24 @@ char *TEST_COMMANDS[] = {
     "cfp gpio read 0"
 };
 
+char *NEW_COMMANDS[] = {
+    "qsfp gpio read int",
+    "qsfp gpio set int",
+    "qsfp gpio clear int",
+    "qsfp gpio toggle int"
+};
+
 int main() {
 	command retVal;
 
     FILE *fp;
-    fp = fopen("file2.txt", "w");
+    fp = fopen("new_commands.txt", "w");
 
-	for (int i = 0; i < sizeof(TEST_COMMANDS); i++) {
-		char *commandStr = TEST_COMMANDS[i];
+	for (int i = 0; i < sizeof(NEW_COMMANDS); i++) {
+		char *commandStr = NEW_COMMANDS[i];
 		retVal = parseCommand(commandStr);
-        fprintf(fp, "%c Command: %s\n", retVal.command_code == i ? '*' : 'X', TEST_COMMANDS[i]);
-        fprintf(fp, "{\n\tcommand_code: %d\n\t", retVal.command_code);
+        fprintf(fp, "%c Command: %s", retVal.command_code == i ? '*' : 'X', NEW_COMMANDS[i]);
+        fprintf(fp, " {\n\tcommand_code: %d\n\t", retVal.command_code);
         for(int i = 0; i < retVal.args_len - 1; i++) {
 			fprintf(fp, "%hhx, ", retVal.args[i]);
 		}

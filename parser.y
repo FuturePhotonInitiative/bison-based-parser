@@ -20,21 +20,23 @@ int yyerror(command*, char const *);
 
 %parse-param {command *command_val}
 
-%token PETB_CMD 
+%token QSFP_CMD
 %token PEK_CMD 
 %token DAC_CMD 
 %token ADC_CMD 
 %token I2CREAD_CMD 
 %token I2CWRITE_CMD 
-%token SPILB_CMD 
 %token SPIXFER_CMD 
 %token CFP_CMD
 %token DEBUG_CMD
+%token VCU108_CMD
+%token ALL_PORT
 %token GPIO 
 %token <command_code> GPIO_SUB 
 %token <command_code> SUB_CMD 
 %token <command_code> ADDR 
-%token <command_code> PETB_PIN 
+%token <command_code> GPIO_PORT
+%token <command_code> VCU108_READ_PORT 
 %token <num> NUMBER 
 %token <command_code> READ 
 %token <command_code> WRITE
@@ -48,322 +50,309 @@ int yyerror(command*, char const *);
 %token IIC
 
 %type <cmd> command
-%type <cmd> petb_command
-%type <cmd> pek_command
-%type <cmd> adc_command
-%type <cmd> dac_command
-%type <cmd> spixfer_command
-%type <cmd> spilb_command
-%type <cmd> i2cwrite_command
-%type <cmd> i2cread_command
-%type <cmd> debug_command
 %type <cmd> cfp_command
+%type <cmd> qsfp_command
+%type <cmd> vcu108_command
+%type <cmd> pek_command
+%type <cmd> debug_command
 
-%union{
+%union {
     char command_code;
     char num;
     char str [MAX_ARGS];
     command cmd;
 }
+
 %%
 
-command: cfp_command { *command_val = $1; }|
-         petb_command { *command_val = $1; }|
-         pek_command { *command_val = $1; }|
-         adc_command { *command_val = $1; }|
-         dac_command { *command_val = $1; }|
-         spixfer_command { *command_val = $1; }|
-         spilb_command { *command_val = $1; }|
-         i2cwrite_command { *command_val = $1; }|
-         i2cread_command { *command_val = $1; } |
-	 debug_command { *command_val = $1; }
-         ;
+command: 
+    cfp_command { *command_val = $1; } |
+    qsfp_command { *command_val = $1; } |
+    vcu108_command { *command_val = $1; } |
+    pek_command { *command_val = $1; } |
+	debug_command { *command_val = $1; };
 
-cfp_command: CFP_CMD GPIO READ NUMBER {
+cfp_command: 
+    CFP_CMD GPIO READ NUMBER {
         $$.command_code = COMMAND_CFP_GPIO_READ;
         $$.args_len = 1;
         $$.args[0] = $4;
-};
+    };
 
-petb_command: PETB_CMD GPIO READ NUMBER PETB_PIN
-            {
-                $$.command_code = COMMAND_PETB_GPIO_READ;
-                $$.args_len = 2;
-                $$.args[0] = $4;
-                $$.args[1] = $5;
-                if ($4 != 0)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                        $$.args_len = 1;
-                        $$.args[0] = ERROR_INVALID_PETB_PORT;
-                }
-            } |
-              PETB_CMD GPIO SET NUMBER PETB_PIN
-            {
-                $$.command_code = COMMAND_PETB_GPIO_SET;
-                $$.args_len = 2;
-                $$.args[0] = $4;
-                $$.args[1] = $5;
-                if ($4 != 0)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                        $$.args_len = 1;
-                        $$.args[0] = ERROR_INVALID_PETB_PORT;
-                }
-            } |
-              PETB_CMD GPIO CLEAR NUMBER PETB_PIN
-            {
-                $$.command_code = COMMAND_PETB_GPIO_CLEAR;
-                $$.args_len = 2;
-                $$.args[0] = $4;
-                $$.args[1] = $5;
-                if ($4 != 0)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                        $$.args_len = 1;
-                        $$.args[0] = ERROR_INVALID_PETB_PORT;
-                }
-            } |
-              PETB_CMD GPIO TOGGLE NUMBER PETB_PIN
-            {
-                $$.command_code = COMMAND_PETB_GPIO_TOGGLE;
-                $$.args_len = 2;
-                $$.args[0] = $4;
-                $$.args[1] = $5;
-                if ($4 != 0)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                        $$.args_len = 1;
-                        $$.args[0] = ERROR_INVALID_PETB_PORT;
-                }
-            } |
-			/*petb eyescan vrange prescale vmax hmax drp stepsize */
-			PETB_CMD EYESCAN NUMBER NUMBER NUMBER STR NUMBER NUMBER
-			{
-				$$.command_code = COMMAND_PETB_EYESCAN;
-				$$.args_len = 6;
-				/* vrange */
-				if( $3 < 0 || $3 > 3 )
-				{
-					$$.command_code = COMMAND_INVALID;
-					$$.args_len = 1;
-					$$.args[0] = ERROR_INVALID_EYESCAN_VRANGE;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[0] = $3;
-				}
-				/* prescale */
-				if( $4 < 0 || $4 > 29 )
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_PRESCALE;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[1] = $4;
-				}
-				/* vmax */
-				if( $5 < 64 || $5 > 127 )
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_VMAX;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[2] = $5;
-				}
-				/* hmax */
-				errno = 0;
-				unsigned short tmp = strtol($6, NULL, 0);
-				if(errno != 0 || tmp < 256 || tmp > 512 )
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_HMAX;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[3] = tmp;
-				}
-				/* drp */
-				if( $7 < 0 || $7 > 3 )
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_DRP;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[4] = $7;
-				}
-				/* stepsize */
-				if( $8 != 1 && $8 != 2 && $8 != 4 && $8 != 8 )
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_STEPSIZE;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[5] = $8;
-				}
-				
-			} |
-			/*petb eyescan vrange prescale vmax hmax drp stepsize */
-			PETB_CMD EYESCAN NUMBER NUMBER NUMBER NUMBER NUMBER NUMBER
-			{
-				$$.command_code = COMMAND_PETB_EYESCAN;
-				$$.args_len = 6;
-				/* vrange */
-				if( $3 < 0 || $3 > 3 )
-				{
-					$$.command_code = COMMAND_INVALID;
-					$$.args_len = 1;
-					$$.args[0] = ERROR_INVALID_EYESCAN_VRANGE;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[0] = $3;
-				}
-				/* prescale */
-				if( $4 < 0 || $4 > 29 )
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_PRESCALE;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[1] = $4;
-				}
-				/* vmax */
-				if( $5 < 64 || $5 > 127 )
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_VMAX;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[2] = $5;
-				}
-				/* hmax */
-				if((unsigned char)($6) < 1)
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_HMAX;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[3] = (unsigned char)($6);
-				}
-				/* drp */
-				if( $7 < 0 || $7 > 3 )
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_DRP;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[4] = $7;
-				}
-				/* stepsize */
-				if( $8 != 1 && $8 != 2 && $8 != 4 && $8 != 8 )
-				{
-					if( $$.command_code != COMMAND_INVALID )
-					{
-						$$.command_code = COMMAND_INVALID;
-						$$.args_len = 0;
-					}
-					$$.args[$$.args_len++] = ERROR_INVALID_EYESCAN_STEPSIZE;
-				}
-				else
-				{
-					((unsigned short *)($$.args))[5] = $8;
-				}
-				
-			} |
-			PETB_CMD BERT NUMBER
-			{
-				$$.command_code = COMMAND_PETB_BERT;
-				$$.args_len = 1;
-				if($3 < 0 || $3 > 7)
-				{
-					$$.command_code = COMMAND_INVALID;
-					$$.args[0] = ERROR_INVALID_BERT_PATTERN;
-				}
-				else
-				{
-					$$.args[0] = $3;
-				}
-			}
-            ;
+qsfp_command: 
+    QSFP_CMD GPIO READ GPIO_PORT {
+        $$.command_code = COMMAND_QSFP_GPIO_READ;
+        $$.args_len = 1;
+        $$.args[0] = $4;
+    } |
+    QSFP_CMD GPIO READ ALL_PORT {
+        $$.command_code = COMMAND_QSFP_GPIO_READ;
+        $$.args_len = 1;
+        $$.args[0] = GPIO_PORT_ALL;
+    } |
+    QSFP_CMD GPIO SET GPIO_PORT {
+        $$.command_code = COMMAND_QSFP_GPIO_SET;
+        $$.args_len = 1;
+        $$.args[0] = $4;
+        if ($4 > 3) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_GPIO_VALUE
+        }
+    } |
+    QSFP_CMD GPIO CLEAR GPIO_PORT {
+        $$.command_code = COMMAND_QSFP_GPIO_CLEAR;
+        $$.args_len = 1;
+        $$.args[0] = $4;
+        if ($4 > 3) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_GPIO_VALUE
+        }
+    } |
+    QSFP_CMD GPIO TOGGLE GPIO_PORT {
+        $$.command_code = COMMAND_QSFP_GPIO_TOGGLE;
+        $$.args_len = 1;
+        $$.args[0] = $4;
+        if ($4 > 3) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_GPIO_VALUE
+        }
+    } |
+    QSFP_CMD EYESCAN {
+        $$.command_code = COMMAND_QSFP_EYESCAN;
+        $$.args_len = 0;	
+    } |
+    QSFP_CMD BERT {
+        $$.command_code = COMMAND_QSFP_BERT;
+        $$.args_len = 0;
+    } |
+    QSFP_CMD IIC READ NUMBER NUMBER NUMBER {
+        $$.command_code = COMMAND_QSFP_IIC_READ;
+        $$.args_len = 3;
+        $$.args[0] = $4;
+        $$.args[1] = $5;
+        $$.args[2] = $6;
+        if ($4 > 3) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_QSFP_IIC_READ_PAGE;
+        }
+        else if ($5 > 255) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_QSFP_IIC_READ_START_ADDRESS;
+        }
+        else if ($6 > 255) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_QSFP_IIC_READ_END_ADDRESS;
+        }
+    };
 
-pek_command: PEK_CMD GPIO READ NUMBER NUMBER
-           {
-                $$.command_code = COMMAND_PEK_GPIO_READ;
-                $$.args_len = 2;
-                if($4 < 0 || $4 > 3)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                        $$.args_len = 1;
-                        $$.args[0] = ERROR_INVALID_PEK_PORT;
+vcu108_command:
+    VCU108_CMD GPIO READ VCU108_READ_PORT NUMBER {
+        $$.command_code = COMMAND_VCU108_GPIO_READ;
+        $$.args_len = 2;
+        $$.args[0] = $4;
+        $$.args[1] = $5;
+        switch ($4) {
+            case VCU108_PORT_LEDS:
+                if ($5 > 7) {
+                    $$.command_code = COMMAND_INVALID;
+                    $$.args_len = 1;
+                    $$.args[0] = ERROR_INVALID_GPIO_VALUE;
                 }
-                else
-                {
-                        $$.args[0] = $4; 
+                break;
+            case VCU108_PORT_BUTTONS:
+                if ($5 > 4) {
+                    $$.command_code = COMMAND_INVALID;
+                    $$.args_len = 1;
+                    $$.args[0] = ERROR_INVALID_GPIO_VALUE;
                 }
-                if($5 < 0 || $5 > 7)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                        if($$.args_len == 1)
-                        {
-                                $$.args_len = 2;
-                                $$.args[1] = ERROR_INVALID_PEK_PIN; 
-                        } 
-                        else
-                        {
-                                $$.args_len = 1;
-                                $$.args[0] = ERROR_INVALID_PEK_PIN;
-                        }
+                break;
+            case VCU108_PORT_SWITCHES:
+                if ($5 > 3) {
+                    $$.command_code = COMMAND_INVALID;
+                    $$.args_len = 1;
+                    $$.args[0] = ERROR_INVALID_GPIO_VALUE;
                 }
-                else
-                {
-                        $$.args[1] = $5;
-                }
-           } |
+                break;
+            default:
+                break;
+        }
+    } |
+    VCU108_CMD GPIO READ ALL_PORT {
+        $$.command_code = COMMAND_VCU108_GPIO_READ;
+        $$.args_len = 1;
+        $$.args[0] = VCU108_PORT_ALL;
+    } |
+    VCU108_CMD GPIO SET NUMBER {
+        $$.command_code = COMMAND_VCU108_GPIO_SET;
+        $$.args_len = 1;
+        $$.args[0] = $4;
+        if ($4 > 7) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_GPIO_VALUE;
+        }
+    } |
+    VCU108_CMD GPIO CLEAR NUMBER {
+        $$.command_code = COMMAND_VCU108_GPIO_CLEAR;
+        $$.args_len = 1;
+        $$.args[0] = $4;
+        if ($4 > 7) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_GPIO_VALUE;
+        }
+    } |
+    VCU108_CMD GPIO TOGGLE NUMBER {
+        $$.command_code = COMMAND_VCU108_GPIO_TOGGLE;
+        $$.args_len = 1;
+        $$.args[0] = $4;
+        if ($4 > 7) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_GPIO_VALUE;
+        }
+    };
+
+pek_command: 
+    PEK_CMD IIC WRITE NUMBER NUMBER STR STR {
+        $$.command_code = COMMAND_PEK_IIC_WRITE;
+        $$.args_len = 2;
+        $$.args[0] = $4;
+        $$.args[1] = $5;
+
+        // copy datatype string
+        int i = 0;
+        for (; $6[i] != '\0'; i++) {
+            $$.args[$$.args_len] = $6[i];
+            $$.args_len++;
+        }
+        $$.args[$$.args_len] = '\0';
+        $$.args_len += 1;
+        int value_start = $$.args_len;
+
+        // copy hex or string string
+        int i = 0;
+        for (; $7[i] != '\0'; i++) {
+            $$.args[$$.args_len] = $7[i];
+            $$.args_len++;
+        }
+        $$.args[$$.args_len] = '\0';
+        $$.args_len += 1;
+
+        if ($4 > 3) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_IIC_WRITE_PAGE;
+        } 
+        else if ($5 > 255) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_PEK_START_ADDRESS;
+        } 
+        else if ((strncmp(args + 2, "char", 4) != 0) && (strncmp(args + 2, "str", 3) != 0)) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_PEK_IIC_DATA_TYPE;
+        }
+        else if (!(strlen(args[value_start]) < (255 - $5))) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_PEK_WRITE_DATA_TOO_LONG;
+        }
+    } |
+
+    // This is the exact same as the above except the 1 byte number is converted back into a string
+    PEK_CMD IIC WRITE NUMBER NUMBER STR NUMBER {
+        $$.command_code = COMMAND_PEK_IIC_WRITE;
+        $$.args_len = 2;
+        $$.args[0] = $4;
+        $$.args[1] = $5;
+
+        // copy datatype string
+        int i = 0;
+        for (; $6[i] != '\0'; i++) {
+            $$.args[$$.args_len] = $6[i];
+            $$.args_len++;
+        }
+        $$.args[$$.args_len] = '\0';
+        $$.args_len += 1;
+        int value_start = $$.args_len;
+
+        // ********** v changed
+        char hex[3];
+        sprintf(hex, "%x", $7);
+        // copy hex
+        int i = 0;
+        for (; hex[i] != '\0'; i++) {
+            $$.args[$$.args_len] = hex[i];
+        // ********** ^ changed
+            $$.args_len++;
+        }
+        $$.args[$$.args_len] = '\0';
+        $$.args_len += 1;
+
+        if ($4 > 3) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_IIC_WRITE_PAGE;
+        } 
+        else if ($5 > 255) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_PEK_START_ADDRESS;
+        } 
+        else if ((strncmp(args + 2, "char", 4) != 0) && (strncmp(args + 2, "str", 3) != 0)) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_PEK_IIC_DATA_TYPE;
+        }
+        else if (!(strlen(args[value_start]) < (255 - $5))) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_PEK_WRITE_DATA_TOO_LONG;
+        }
+    } |
+    PEK_CMD IIC READ NUMBER NUMBER NUMBER {
+        $$.command_code = COMMAND_PEK_IIC_READ;
+        $$.args_len = 3;
+        $$.args[0] = $4;
+        $$.args[1] = $5;
+        $$.args[2] = $6;
+        if ($4 > 3) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_PEK_IIC_READ_PAGE;
+        }
+        else if ($5 > 255) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_PEK_IIC_READ_START_ADDRESS;
+        }
+        else if ($6 > 255) {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_PEK_IIC_READ_END_ADDRESS;
+        }
+    } |
+
+    PEK_CMD GPIO READ GPIO_PORT {
+        $$.command_code = COMMAND_PEK_GPIO_READ;
+        $$.args_len = 1;
+        $$.args[0] = $4;
+    } |
+
+
+
+
+
+
+
              PEK_CMD GPIO SET NUMBER NUMBER
            {
                 $$.command_code = COMMAND_PEK_GPIO_SET;
@@ -462,183 +451,18 @@ pek_command: PEK_CMD GPIO READ NUMBER NUMBER
                 {
                         $$.args[1] = $5;
                 }
-           } |
-             PEK_CMD GPIO WRITE NUMBER NUMBER NUMBER
-           {
-                $$.command_code = COMMAND_PEK_GPIO_TOGGLE;
-                $$.args_len = 3;
-                if($4 < 0 || $4 > 3)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                        $$.args_len = 1;
-                        $$.args[0] = ERROR_INVALID_PEK_PORT;
-                }
-                else
-                {
-                        $$.args[0] = $4; 
-                }
-                if($5 < 0 || $5 > 7)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                        if($$.args_len == 1)
-                        {
-                                $$.args_len = 2;
-                                $$.args[1] = ERROR_INVALID_PEK_PIN; 
-                        } 
-                        else
-                        {
-                                $$.args_len = 1;
-                                $$.args[0] = ERROR_INVALID_PEK_PIN;
-                        }
-                }
-                else
-                {
-                        $$.args[1] = $5;
-                }
-                if($6 != 0 && $6 != 1)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                        if($$.args_len != 3)
-                        {
-                                $$.args_len = $$.args_len + 1;
-                                $$.args[$$.args_len - 1] = ERROR_INVALID_GPIO_VALUE;
-                        }
-                        else
-                        {
-                                $$.args_len = 1;
-                                $$.args[0] = ERROR_INVALID_GPIO_VALUE;
-                        }
-                }
-                else
-                {
-                        $$.args[2] = $6;
-                }
-           } |
-             PEK_CMD GPIO LIST
-           {
-                $$.command_code = COMMAND_PEK_GPIO_LIST;
-                $$.args_len = 0;
-           }
+           } 
         ;
 
-adc_command: ADC_CMD READ NUMBER
-        {
-                /* TODO make sure these are all hex */
-                /* Validate that the user has provided the correct channel */
-                if($3 != 0 && $3 != 0x0e && $3 != 0x10 && $3 != 0x13 && $3 != 0x16 && $3 != 0x17)
-                {
-                        $$.command_code = COMMAND_INVALID;
-                }
-                else
-                {
-                        $$.command_code = COMMAND_ADC_READ;
-                        $$.args_len = 1;
-                        $$.args[0] = $3;
-                        $$.args[1] = -1;
-                }
-        }
-        ;
-
-dac_command: DAC_CMD WRITE 
-        {/* TODO get the specs for the write arguments */
-                $$.command_code = COMMAND_DAC_WRITE;
-        }
-        ;
-
-/* TODO write a lex rule for str, and remember the rules about length matching */
-spixfer_command: SPIXFER_CMD STR
-        {
-                $$.command_code = COMMAND_SPIXFER;
-                int i = 0;
-                while($2[i] != '\0' && i < MAX_ARGS - 1)
-                {
-                        $$.args[i] = $2[i];
-                        i++;
-                }
-                $$.args[i] = '\0';
-                $$.args_len = strlen($$.args);
-        } |
-        SPIXFER_CMD NUMBER
-        {
-                $$.command_code = COMMAND_SPIXFER;
-                int i = 0;
-                char tmp[MAX_ARGS - 1];
-                /*TODO this will cause strings originally entered as hex to be transfered as dec*/
-                sprintf(tmp, "%d", $2);
-                while(tmp[i] != '\0' && i < MAX_ARGS - 1)
-                {
-                        $$.args[i] = tmp[i];
-                        i++;
-                }
-                $$.args[i] = '\0';
-                $$.args_len = strlen($$.args);
-        }
-        ;
-
-spilb_command: SPILB_CMD STR
-        {
-                $$.command_code = COMMAND_SPILB;
-                int i = 0;
-                while($2[i] != '\0')
-                {
-                        $$.args[i] = $2[i];
-                        i++;
-                }
-                $$.args[i] = '\0';
-                $$.args_len = strlen($$.args);
-        } |
-        SPILB_CMD NUMBER
-        {
-                $$.command_code = COMMAND_SPILB;
-                int i = 0;
-                char tmp[MAX_ARGS - 1];
-                /*TODO this will cause strings originally entered as hex to be transfered as dec*/
-                sprintf(tmp, "%d", $2);
-                while(tmp[i] != '\0' && i < MAX_ARGS - 1)
-                {
-                        $$.args[i] = tmp[i];
-                        i++;
-                }
-                $$.args[i] = '\0';
-                $$.args_len = strlen($$.args);
-        }
-        ;
-
-/* TODO */
-i2cwrite_command: I2CWRITE_CMD NUMBER NUMBER
-        {
-                $$.command_code = COMMAND_I2CWRITE;
-                /* Don't check the addresses because NUMBER is a byte, and the valid address space is the full range of byte */
-                $$.args_len = 2;
-                $$.args[0] = $2;
-                $$.args[1] = $3;
-        }
-        ;
-
-/* TODO */
-i2cread_command: I2CREAD_CMD NUMBER NUMBER
-        {
-                $$.command_code = COMMAND_I2CREAD;
-                /* Don't check the addresses because NUMBER is a byte, and the valid address space is the full range of byte */
-                $$.args_len = 2;
-                $$.args[0] = $2;
-                $$.args[1] = $3;
-        }
-        ;
-
-debug_command: DEBUG_CMD PETB_CMD IIC
-		{
-			$$.command_code = COMMAND_DEBUG_IIC;
-			$$.args_len = 0;
-			$$.args[0] = 0;
-		} |
-		DEBUG_CMD PETB_CMD GPIO
-		{
-			$$.command_code = COMMAND_DEBUG_GPIO;
-			$$.args_len = 0;
-			$$.args[0] = 0;
-		}
-		;
+debug_command: 
+    DEBUG_CMD VCU108_CMD {
+		$$.command_code = COMMAND_DEBUG_VCU108;
+		$$.args_len = 0;
+	} |
+	DEBUG_CMD QSFP_CMD {
+	    $$.command_code = COMMAND_DEBUG_QSFP;
+		$$.args_len = 0;
+	};
 
 %%
 
