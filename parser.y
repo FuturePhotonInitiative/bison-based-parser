@@ -41,6 +41,8 @@ int yyerror(command*, char const *);
 %token BERT
 %token EYESCAN
 %token IIC
+%token HEX
+%token CHAR
 
 %type <cmd> command
 %type <cmd> cfp_command
@@ -246,102 +248,40 @@ vcu108_command:
 
 
 pek_command: 
-    PEK_CMD IIC WRITE NUMBER NUMBER STR STR {
+    PEK_CMD IIC WRITE NUMBER NUMBER HEX STR {
         $$.command_code = COMMAND_PEK_IIC_WRITE;
         $$.args_len = 2;
         $$.args[0] = $4;
         $$.args[1] = $5;
 
-        // copy datatype string
-        int i = 0;
-        for (; $6[i] != '\0'; i++) {
-            $$.args[$$.args_len] = $6[i];
-            $$.args_len++;
-        }
-        $$.args[$$.args_len] = '\0';
-        $$.args_len += 1;
-        int value_start = $$.args_len;
-
-        // copy hex or string string
-        i = 0;
-        for (; $7[i] != '\0'; i++) {
-            $$.args[$$.args_len] = $7[i];
-            $$.args_len++;
-        }
-        $$.args[$$.args_len] = '\0';
-        $$.args_len += 1;
-
         if ($4 > 3) {
             $$.command_code = COMMAND_INVALID;
             $$.args_len = 1;
             $$.args[0] = ERROR_INVALID_PEK_IIC_WRITE_PAGE;
-        } 
-        else if ($5 > 255) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_START_ADDRESS;
-        } 
-        else if ((strncmp($$.args + 2, "char", 4) != 0) && (strncmp($$.args + 2, "hex", 3) != 0)) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_IIC_DATA_TYPE;
         }
-        else if (!(strlen($$.args + value_start) < (255 - $5))) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_PEK_WRITE_DATA_TOO_LONG;
+        else {
+            sprintf($$.args + $$.args_len, "%s", "hex");
+            $$.args_len += 4;
+            sprintf($$.args + $$.args_len, "%s", $7);
+            $$.args_len += strlen($7) + 1;
         }
     } |
-
-    // This is the exact same as the above except the 1 byte number is converted back into a string
-    PEK_CMD IIC WRITE NUMBER NUMBER STR NUMBER {
+    PEK_CMD IIC WRITE NUMBER NUMBER CHAR STR {
         $$.command_code = COMMAND_PEK_IIC_WRITE;
         $$.args_len = 2;
         $$.args[0] = $4;
         $$.args[1] = $5;
 
-        // copy datatype string
-        int i = 0;
-        for (; $6[i] != '\0'; i++) {
-            $$.args[$$.args_len] = $6[i];
-            $$.args_len++;
-        }
-        $$.args[$$.args_len] = '\0';
-        $$.args_len += 1;
-        int value_start = $$.args_len;
-
-        // ********** v changed
-        char hex[3];
-        sprintf(hex, "%x", $7);
-        // copy hex
-        i = 0;
-        for (; hex[i] != '\0'; i++) {
-            $$.args[$$.args_len] = hex[i];
-        // ********** ^ changed
-            $$.args_len++;
-        }
-        $$.args[$$.args_len] = '\0';
-        $$.args_len += 1;
-
         if ($4 > 3) {
             $$.command_code = COMMAND_INVALID;
             $$.args_len = 1;
             $$.args[0] = ERROR_INVALID_PEK_IIC_WRITE_PAGE;
-        } 
-        else if ($5 > 255) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_START_ADDRESS;
-        } 
-        else if ((strncmp($$.args + 2, "char", 4) != 0) && (strncmp($$.args + 2, "hex", 3) != 0)) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_IIC_DATA_TYPE;
         }
-        else if (!(strlen($$.args + value_start) < (255 - $5))) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_PEK_WRITE_DATA_TOO_LONG;
+        else {
+            sprintf($$.args + $$.args_len, "%s", "char");
+            $$.args_len += 5;
+            sprintf($$.args + $$.args_len, "%s", $7);
+            $$.args_len += strlen($7) + 1;
         }
     } |
     PEK_CMD IIC READ NUMBER NUMBER NUMBER {
@@ -366,7 +306,6 @@ pek_command:
             $$.args[0] = ERROR_INVALID_PEK_IIC_READ_END_ADDRESS;
         }
     } |
-
     PEK_CMD GPIO READ GPIO_PORT {
         $$.command_code = COMMAND_PEK_GPIO_READ;
         $$.args_len = 1;
@@ -436,4 +375,3 @@ command parseCommand(char* commandStr) {
     command_val.command_code = -1;
     return command_val;
 }
-

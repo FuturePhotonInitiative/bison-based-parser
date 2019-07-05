@@ -1,0 +1,3 @@
+When wanting to write a hex value, please prepend the number with an 0x
+When wanting to write a value during the pek iic write command, please use either single or double quotes to enclose the value
+You cannot write a value greater than 50 characters into the terminal

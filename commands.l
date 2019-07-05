@@ -118,16 +118,23 @@ mod_lopwr   { yylval.command_code = CFP_PORT_MOD_LOPWR; return CFP_PORT; }
 
 mod_rstn    { yylval.command_code = CFP_PORT_MOD_RSTN; return CFP_PORT; }
 
+hex     { return HEX; }
+
+char    { return CHAR; }
+
 (0x)?[0-9a-fA-F]* { 
     long tmp = strtol(yytext, NULL, 0);
     if (tmp >= 0 && tmp < 256) {
         yylval.num = tmp;
         return NUMBER;
     }
+}
+
+[\'\"][^\'\"]+[\'\"] {
     strncpy(yylval.str, yytext, MAX_ARGS);
-    yylval.str[MAX_ARGS-1] = '\0';
-    return STR; 
-} 
+    yylval.str[MAX_ARGS - 1] = '\0';
+    return STR;
+}
 
 [ \r\t] ;/*Ignore whitespace*/
 

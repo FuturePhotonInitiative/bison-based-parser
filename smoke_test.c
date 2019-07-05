@@ -7,7 +7,7 @@
 #include <string.h>
 
 // how many tests failed to match the assertion
-int fail_count = 0;
+int fail_assertion_count = 0;
 
 // @return true if the test did not have the same outcome as the assertion
 bool test_int_args(char *cmd_str, unsigned char expected_cmd_code, unsigned char *args, unsigned char len_args, FILE *fp, bool assert_success) {
@@ -60,7 +60,7 @@ bool test_int_args(char *cmd_str, unsigned char expected_cmd_code, unsigned char
 
     fprintf(fp, "%s\n\n", failure ? "FAILURE" : "SUCCESS");
     if (failure == assert_success) {
-        fail_count += 1;
+        fail_assertion_count += 1;
         fprintf(fp, "Error code: %d\n", ret_val.args[0]);
         fprintf(fp, "assertion failed\n");
         char message1[] = "FAILED instead of SUCCEEDED";
@@ -86,6 +86,7 @@ void test_pek_iic_write(char *cmd_str, unsigned char ar0, unsigned char ar1, cha
         char *ret_ar3 = ret_ar2 + strlen(ret_ar2) + 1;
         if (ar0 != ret_ar0 || ar1 != ret_ar1 || strncmp(ar2, ret_ar2, strlen(ar2)) != 0 || strncmp(ar3, ret_ar3, strlen(ar3) != 0)) {
             fprintf(fp, "--args do not match--\n");
+            failure = true;
             fprintf(fp, "  parsed args {%d %d %s %s}\n", ret_ar0, ret_ar1, ret_ar2, ret_ar3);
             fprintf(fp, "expected args {%d %d %s %s}\n", ar0, ar1, ar2, ar3);
         }
@@ -93,8 +94,8 @@ void test_pek_iic_write(char *cmd_str, unsigned char ar0, unsigned char ar1, cha
 
     fprintf(fp, "%s\n\n", failure ? "FAILURE" : "SUCCESS");
     if (failure == assert_success) {
-        fail_count += 1;
-        fprintf(fp, "Error code: %d", ret_val.args[0]);
+        fail_assertion_count += 1;
+        fprintf(fp, "Error code: %d\n", ret_val.args[0]);
         fprintf(fp, "assertion failed\n");
         char message1[] = "FAILED instead of SUCCEEDED";
         char message2[] = "SUCCEEDED instead of FAILED";
@@ -479,34 +480,69 @@ int main() {
     unsigned char ar0 = 0;
     unsigned char ar1 = 0;
     char *ar2 = "hex";
-    char *ar3 = "0";
+    char *ar3 = "\"0\"";
     char curr_str[80];
     sprintf(curr_str, "pek iic write %d %d %s %s", ar0, ar1, ar2, ar3);
     test_pek_iic_write(curr_str, ar0, ar1, ar2, ar3, fp, true);
     ar0 = 3;
     ar1 = 255;
     ar2 = "hex";
-    ar3 = "0";
+    ar3 = "\'0xFF835D\'";
+    sprintf(curr_str, "pek iic write %d %d %s %s", ar0, ar1, ar2, ar3);
+    test_pek_iic_write(curr_str, ar0, ar1, ar2, ar3, fp, true);
+    ar0 = 3;
+    ar1 = 255;
+    ar2 = "char";
+    ar3 = "\"hello, how are you\"";
     sprintf(curr_str, "pek iic write %d %d %s %s", ar0, ar1, ar2, ar3);
     test_pek_iic_write(curr_str, ar0, ar1, ar2, ar3, fp, true);
     // 3 is the max for the first argument
     ar0 = 4;
     ar1 = 255;
     ar2 = "hex";
-    ar3 = "0";
+    ar3 = "\"0\"";
     sprintf(curr_str, "pek iic write %d %d %s %s", ar0, ar1, ar2, ar3);
     test_pek_iic_write(curr_str, ar0, ar1, ar2, ar3, fp, false);
-    // I know this will break it. I will fix this soon
-    ar0 = 3;
-    ar1 = 255;
-    ar2 = "char";
-    ar3 = "4";
-    sprintf(curr_str, "pek iic write %d %d %s %s", ar0, ar1, ar2, ar3);
-    test_pek_iic_write(curr_str, ar0, ar1, ar2, ar3, fp, true);
 
 
+    //****** pek iic read ******//
+    // normal usages, min, max
+    args3[0] = 0;
+    args3[1] = 0;
+    args3[2] = 0;
+    test_int_args("pek iic read 0 0 0", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, true);
+    args3[0] = 3;
+    args3[1] = 255;
+    args3[2] = 255;
+    test_int_args("pek iic read 3 255 255", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, true);
+    args3[0] = 2;
+    args3[1] = 200;
+    args3[2] = 154;
+    test_int_args("pek iic read 2 200 154", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, true);
+    // 3 is max for the 0th arg
+    args3[0] = 4;
+    args3[1] = 255;
+    args3[2] = 255;
+    test_int_args("pek iic read 4 255 255", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, false);
 
-    fprintf(fp, "\n---Fail count: %d---\n", fail_count);
+
+    //****** pek bert ******//
+    // normal usages
+    test_int_args("pek bert", COMMAND_PEK_BERT, 0, 0, fp, true);
+    // should not take any arguments
+    args1[0] = 0;
+    test_int_args("pek bert 0", COMMAND_PEK_BERT, 0, 0, fp, false);
+
+
+    //****** pek eyescan ******//
+    // normal usages
+    test_int_args("pek eyescan", COMMAND_PEK_EYESCAN, 0, 0, fp, true);
+    // should not take any arguments
+    args1[0] = 0;
+    test_int_args("pek eyescan 0", COMMAND_PEK_EYESCAN, 0, 0, fp, false);
+
+
+    fprintf(fp, "\n---Failed assertion count: %d---\n", fail_assertion_count);
 
     fflush(fp);
     fclose(fp);
