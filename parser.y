@@ -281,7 +281,7 @@ pek_command:
             $$.args_len = 1;
             $$.args[0] = ERROR_INVALID_PEK_START_ADDRESS;
         } 
-        else if ((strncmp($$.args + 2, "char", 4) != 0) && (strncmp($$.args + 2, "str", 3) != 0)) {
+        else if ((strncmp($$.args + 2, "char", 4) != 0) && (strncmp($$.args + 2, "hex", 3) != 0)) {
             $$.command_code = COMMAND_INVALID;
             $$.args_len = 1;
             $$.args[0] = ERROR_INVALID_PEK_IIC_DATA_TYPE;
@@ -333,7 +333,7 @@ pek_command:
             $$.args_len = 1;
             $$.args[0] = ERROR_INVALID_PEK_START_ADDRESS;
         } 
-        else if ((strncmp($$.args + 2, "char", 4) != 0) && (strncmp($$.args + 2, "str", 3) != 0)) {
+        else if ((strncmp($$.args + 2, "char", 4) != 0) && (strncmp($$.args + 2, "hex", 3) != 0)) {
             $$.command_code = COMMAND_INVALID;
             $$.args_len = 1;
             $$.args[0] = ERROR_INVALID_PEK_IIC_DATA_TYPE;
@@ -371,6 +371,11 @@ pek_command:
         $$.command_code = COMMAND_PEK_GPIO_READ;
         $$.args_len = 1;
         $$.args[0] = $4;
+    } |
+    PEK_CMD GPIO READ ALL_PORT {
+        $$.command_code = COMMAND_PEK_GPIO_READ;
+        $$.args_len = 1;
+        $$.args[0] = GPIO_PORT_ALL;
     } |
     PEK_CMD GPIO SET GPIO_PORT {
         $$.command_code = COMMAND_PEK_GPIO_SET;
@@ -425,7 +430,7 @@ command parseCommand(char* commandStr) {
     _setupLexInput(commandStr);
     int yyparseReturn = yyparse(&command_val);
     _cleanupLex();
-    if(yyparseReturn == 0) {
+    if (yyparseReturn == 0) {
         return command_val;
     }
     command_val.command_code = -1;
