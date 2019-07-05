@@ -20,28 +20,21 @@
 
 %%
 
-ad	|
-adc	 { yylval.command_code = 1; return ADC_CMD; }
+al	    |
+all	    { return ALL_PORT; }
 
-al	|
-all	 { return ALL_PORT; }
+b       |
+be      |
+ber     |
+bert    { return BERT; }
 
-b    |
-be   |
-ber  |
-bert { return BERT; }
-
-c	|
-cl	|
-cle	|
+c	    |
+cl     	|
+cle	    |
 clea	|
-clear	 { yylval.command_code = GPIO_CLEAR; return CLEAR; }
+clear   { return CLEAR; }
 
-d
-da	|
-dac	 { yylval.command_code = 2; return DAC_CMD; }
-
-debug	{ return DEBUG_CMD; }
+debug	{ return DEBUG; }
 
 e		|
 ey		|
@@ -51,80 +44,79 @@ eyesc	|
 eyesca	|
 eyescan	{ return EYESCAN; }
 
-g	|
-gp	|
-gpi	|
-gpio	 { return GPIO; }
+g	    |
+gp  	|
+gpi	    |
+gpio	{ return GPIO; }
 
-ii	|
+ii	    |
 iic		{ return IIC; }
 
-in	|
-int	 { yylval.command_code = GPIO_PORT_INT; return GPIO_PORT; }
+in	    |
+int	    { yylval.command_code = GPIO_PORT_INT; return GPIO_PORT; }
 
-li	|
-lis	|
-list	 { yylval.command_code = GPIO_LIST; return LIST; }
-
-lp	|
-lpm	|
+lp	    |
+lpm	    |
 lpmo	|
 lpmod	|
-lpmode	 { yylval.command_code = GPIO_PORT_LPMODE; return GPIO_PORT; }
+lpmode	{ yylval.command_code = GPIO_PORT_LPMODE; return GPIO_PORT; }
 
 modp	|
 modpr	|
-modprs	 { yylval.command_code = GPIO_PORT_MODPRS; return GPIO_PORT; }
+modprs	{ yylval.command_code = GPIO_PORT_MODPRS; return GPIO_PORT; }
 
 mods	|
 modse	|
-modsel	 { yylval.command_code = GPIO_PORT_MODSEL; return GPIO_PORT; }
+modsel	{ yylval.command_code = GPIO_PORT_MODSEL; return GPIO_PORT; }
 
-pek	 { yylval.command_code = 5; return PEK_CMD; }
+pek	    { yylval.command_code = 5; return PEK_CMD; }
 
-qsfp	 { yylval.command_code = 6; return QSFP_CMD; }
+qsfp	{ yylval.command_code = 6; return QSFP_CMD; }
 
-rea	|
-read	 { yylval.command_code = GPIO_READ; return READ; }
+rea	    |
+read	{ return READ; }
 
-res	|
+res	    |
 rese	|
-reset	 { yylval.command_code = GPIO_PORT_RESET; return GPIO_PORT; }
+reset	{ yylval.command_code = GPIO_PORT_RESET; return GPIO_PORT; }
 
-se	|
-set	 { yylval.command_code = GPIO_SET; return SET; }
+se	    |
+set	    { return SET; }
 
-spil	|
-spilb	 { yylval.command_code = 7; return SPILB_CMD; }
-
-spix	|
-spixf	|
-spixfe	|
-spixfer	 { yylval.command_code = 8; return SPIXFER_CMD; }
-
-t	|
-to	|
-tog	|
+t	    |
+to	    |
+tog	    |
 togg	|
 toggl	|
-toggle	 { yylval.command_code = GPIO_TOGGLE; return TOGGLE; }
+toggle	{ return TOGGLE; }
 
-w	|
-wr	|
-wri	|
+w	    |
+wr	    |
+wri	    |
 writ	|
-write	 { yylval.command_code = GPIO_WRITE; return WRITE; }
+write	{ return WRITE; }
 
-cfp { yylval.command_code = 9; return CFP_CMD; }
+cfp     { yylval.command_code = 9; return CFP_CMD; }
 
-vcu108 { yylval.command_code = 10; return VCU108_CMD; }
+vcu108  { yylval.command_code = 10; return VCU108_CMD; }
 
-leds { yylval.command_code = VCU108_PORT_LEDS; return VCU108_READ_PORT; }
+leds    { yylval.command_code = VCU108_PORT_LEDS; return VCU108_PORT; }
 
-buttons { yylval.command_code = VCU108_PORT_BUTTONS; return VCU108_READ_PORT; }
+buttons { yylval.command_code = VCU108_PORT_BUTTONS; return VCU108_PORT; }
 
-switches { yylval.command_code = VCU108_PORT_SWITCHES; return VCU108_READ_PORT; }
+switches    { yylval.command_code = VCU108_PORT_SWITCHES; return VCU108_PORT; }
 
+prg_cntl1   { yylval.command_code = CFP_PORT_PRG_CNTL1; return CFP_PORT; }
+
+prg_cntl2   { yylval.command_code = CFP_PORT_PRG_CNTL2; return CFP_PORT; }
+
+prg_cntl3   { yylval.command_code = CFP_PORT_PRG_CNTL3; return CFP_PORT; }
+
+tx_dis  { yylval.command_code = CFP_PORT_TX_DIS; return CFP_PORT; }
+
+mod_lopwr   { yylval.command_code = CFP_PORT_MOD_LOPWR; return CFP_PORT; }
+
+mod_rstn    { yylval.command_code = CFP_PORT_MOD_RSTN; return CFP_PORT; }
 
 (0x)?[0-9a-fA-F]* { 
     long tmp = strtol(yytext, NULL, 0);
