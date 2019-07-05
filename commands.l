@@ -127,6 +127,8 @@ wri	|
 writ	|
 write	 { yylval.command_code = GPIO_WRITE; return WRITE; }
 
+cfp { yylval.command_code = 9; return CFP_CMD; }
+
 (0x)?[0-9a-fA-F]*       { 
                         long tmp = strtol(yytext, NULL, 0);
                         if(tmp >= 0 && tmp < 256)

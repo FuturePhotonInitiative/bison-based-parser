@@ -28,6 +28,7 @@ int yyerror(command*, char const *);
 %token I2CWRITE_CMD 
 %token SPILB_CMD 
 %token SPIXFER_CMD 
+%token CFP_CMD
 %token DEBUG_CMD
 %token GPIO 
 %token <command_code> GPIO_SUB 
@@ -56,6 +57,7 @@ int yyerror(command*, char const *);
 %type <cmd> i2cwrite_command
 %type <cmd> i2cread_command
 %type <cmd> debug_command
+%type <cmd> cfp_command
 
 %union{
     char command_code;
@@ -65,7 +67,8 @@ int yyerror(command*, char const *);
 }
 %%
 
-command: petb_command { *command_val = $1; }|
+command: cfp_command { *command_val = $1; }|
+         petb_command { *command_val = $1; }|
          pek_command { *command_val = $1; }|
          adc_command { *command_val = $1; }|
          dac_command { *command_val = $1; }|
@@ -73,8 +76,14 @@ command: petb_command { *command_val = $1; }|
          spilb_command { *command_val = $1; }|
          i2cwrite_command { *command_val = $1; }|
          i2cread_command { *command_val = $1; } |
-		 debug_command { *command_val = $1; }
+	 debug_command { *command_val = $1; }
          ;
+
+cfp_command: CFP_CMD GPIO READ NUMBER {
+        $$.command_code = COMMAND_CFP_GPIO_READ;
+        $$.args_len = 1;
+        $$.args[0] = $4;
+};
 
 petb_command: PETB_CMD GPIO READ NUMBER PETB_PIN
             {
