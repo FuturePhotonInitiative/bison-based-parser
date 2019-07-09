@@ -118,9 +118,9 @@ mod_lopwr   { yylval.command_code = CFP_PORT_MOD_LOPWR; return CFP_PORT; }
 
 mod_rstn    { yylval.command_code = CFP_PORT_MOD_RSTN; return CFP_PORT; }
 
-hex     { return HEX; }
+hex     { return HEX_TYPE; }
 
-char    { return CHAR; }
+char    { return CHAR_TYPE; }
 
 (0x)?[0-9a-fA-F]* { 
     long tmp = strtol(yytext, NULL, 0);
