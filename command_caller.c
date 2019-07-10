@@ -33,16 +33,16 @@ void call_command(command cmd) {
             qsfp_gpio_read(unmap_gpio[cmd.args[0]]);
             break;
         case COMMAND_QSFP_GPIO_SET:
-            qsfp_gpio_set(unmap_gpio[cmd.args[0]]);
+            qsfp_set_port(unmap_gpio[cmd.args[0]]);
             break;
         case COMMAND_QSFP_GPIO_CLEAR:
-            qsfp_gpio_clear(unmap_gpio[cmd.args[0]]);
+            qsfp_clear_port(unmap_gpio[cmd.args[0]]);
             break;
         case COMMAND_QSFP_GPIO_TOGGLE:
             qsfp_gpio_toggle(unmap_gpio[cmd.args[0]]);
             break;
         case COMMAND_QSFP_IIC_READ:
-            qsfp_iicreadtest(cmd.args[0], cmd.args[1], cmd.args[2]);
+            qsfp_iic_read(cmd.args[0], cmd.args[1], cmd.args[2]);
             break;
         case COMMAND_QSFP_BERT:
             xil_printf(USE_PTCS);
@@ -51,7 +51,7 @@ void call_command(command cmd) {
             xil_printf(USE_PTCS);
             break;
         case COMMAND_QSFP_DEBUG:
-            hello_iic();
+            qsfp_debug_iic();
             break;
         case COMMAND_VCU108_DEBUG:
             vcu108_debug();
@@ -68,36 +68,37 @@ void call_command(command cmd) {
         case COMMAND_VCU108_GPIO_TOGGLE:
             vcu108_gpio_toggle(cmd.args[0]);
             break;
-
-
-        // wat
         case COMMAND_PEK_GPIO_READ:
+            pek_gpio_read(args[0], args[1]);
             break;
         case COMMAND_PEK_GPIO_SET:
+            pek_set_port(args[0], args[1]);
             break;
         case COMMAND_PEK_GPIO_CLEAR:
+            pek_gpio_clear(args[0], args[1]);
             break;
         case COMMAND_PEK_GPIO_TOGGLE:
+            pek_gpio_toggle(args[0], args[1]);
             break;
-
-
-
         case COMMAND_PEK_IIC_WRITE:
             unsigned char data_start_index = 6;
             if (args[2] == 'c') {
                 // the data type is "char" not "hex", which is one more character
                 data_start_index += 1;
             }
-            qsfp_iicwritetest(args[0], args[1], args[2], args[data_start_index]);
+            qsfp_iic_write(args[0], args[1], args[2], args[data_start_index]);
             break;
         case COMMAND_PEK_IIC_READ:
-            qsfp_iicreadtest(args[0], args[1], args[2]);
+            qsfp_iic_read(args[0], args[1], args[2]);
             break;
         case COMMAND_PEK_BERT:
             xil_printf(USE_PTCS);
             break;
         case COMMAND_PEK_EYESCAN:
             xil_printf(USE_PTCS);
+            break;
+        case COMMAND_PEK_DEBUG:
+            pek_debug_iic();
             break;
         case COMMAND_INVALID:
             switch (cmd.args[0]) {

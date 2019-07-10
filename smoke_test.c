@@ -531,7 +531,7 @@ int main() {
     test_int_args("pek bert", COMMAND_PEK_BERT, 0, 0, fp, true);
     // should not take any arguments
     args1[0] = 0;
-    test_int_args("pek bert 0", COMMAND_PEK_BERT, 0, 0, fp, false);
+    test_int_args("pek bert 0", COMMAND_PEK_BERT, args1, sizeof(args1), fp, false);
 
 
     //****** pek eyescan ******//
@@ -539,7 +539,15 @@ int main() {
     test_int_args("pek eyescan", COMMAND_PEK_EYESCAN, 0, 0, fp, true);
     // should not take any arguments
     args1[0] = 0;
-    test_int_args("pek eyescan 0", COMMAND_PEK_EYESCAN, 0, 0, fp, false);
+    test_int_args("pek eyescan 0", COMMAND_PEK_EYESCAN, args1, sizeof(args1), fp, false);
+
+
+    //****** pek debug ******//
+    // normal usage
+    test_int_args("pek debug", COMMAND_PEK_DEBUG, 0, 0, fp, true);
+    // should not take any arguments
+    args1[0] = 0;
+    test_int_args("pek debug", COMMAND_PEK_DEBUG, args1, sizeof(args1), fp, false);
 
 
     fprintf(fp, "\n---Failed assertion count: %d---\n", fail_assertion_count);

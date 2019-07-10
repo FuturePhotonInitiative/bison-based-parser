@@ -333,6 +333,10 @@ pek_command:
     PEK_CMD EYESCAN {
         $$.command_code = COMMAND_PEK_EYESCAN;
         $$.args_len = 0;
+    } |
+    PEK_CMD DEBUG {
+        $$.command_code = COMMAND_PEK_DEBUG;
+        $$.args_len = 0;
     };
 
 %%
