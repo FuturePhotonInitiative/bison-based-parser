@@ -6,11 +6,10 @@
  *
  *****************************************************************************/
 #include "command_caller.h"
-#include "petb_interface.h"
-#include "pek_interface.h"
+#include "vcu108.h"
 #include "qsfp_iic.h"
-#include "xil_printf.h"
-#include "vcu108_gpio.h"
+#include "qsfp_gpio.h"
+#include "pek.h"
 
 void call_command(command cmd) {
     switch (cmd.command_code) {
