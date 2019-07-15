@@ -19,7 +19,7 @@ bool test_int_args(char *cmd_str, unsigned char expected_cmd_code, unsigned char
         fprintf(fp, "  parsed code: %d\nexpected code: %d\n", ret_val.command_code, expected_cmd_code);
         failure = true;
     } else {
-        fprintf(fp, "command codes match\n");
+        fprintf(fp, "command codes match: %d\n", ret_val.command_code);
 
         if (ret_val.args_len != len_args) {
             fprintf(fp, "--size of args do not match--\n");
