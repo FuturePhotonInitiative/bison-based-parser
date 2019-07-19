@@ -20,80 +20,40 @@
 
 %%
 
-al	    |
 all	    { return ALL_PORT; }
 
-b       |
-be      |
-ber     |
 bert    { return BERT; }
 
-c	    |
-cl     	|
-cle	    |
-clea	|
 clear   { return CLEAR; }
 
 debug	{ return DEBUG; }
 
-e		|
-ey		|
-eye		|
-eyes	|
-eyesc	|
-eyesca	|
 eyescan	{ return EYESCAN; }
 
-g	    |
-gp  	|
-gpi	    |
 gpio	{ return GPIO; }
 
-ii	    |
 iic		{ return IIC; }
 
-in	    |
 int	    { yylval.command_code = GPIO_PORT_INT; return GPIO_PORT; }
 
-lp	    |
-lpm	    |
-lpmo	|
-lpmod	|
 lpmode	{ yylval.command_code = GPIO_PORT_LPMODE; return GPIO_PORT; }
 
-modp	|
-modpr	|
 modprs	{ yylval.command_code = GPIO_PORT_MODPRS; return GPIO_PORT; }
 
-mods	|
-modse	|
 modsel	{ yylval.command_code = GPIO_PORT_MODSEL; return GPIO_PORT; }
 
 pek	    { yylval.command_code = 5; return PEK_CMD; }
 
 qsfp	{ yylval.command_code = 6; return QSFP_CMD; }
 
-rea	    |
 read	{ return READ; }
 
-res	    |
-rese	|
 reset	{ yylval.command_code = GPIO_PORT_RESET; return GPIO_PORT; }
 
-se	    |
 set	    { return SET; }
 
-t	    |
-to	    |
-tog	    |
-togg	|
-toggl	|
 toggle	{ return TOGGLE; }
 
-w	    |
-wr	    |
-wri	    |
-writ	|
 write	{ return WRITE; }
 
 cfp     { yylval.command_code = 9; return CFP_CMD; }
@@ -147,12 +107,11 @@ char    { return CHAR_TYPE; }
 YY_BUFFER_STATE currentString;
 
 void _setupLexInput(char* inputBuffer) {
-        yy_delete_buffer(YY_CURRENT_BUFFER);
-        currentString = yy_scan_string(inputBuffer);
-        BEGIN(INITIAL);
+    yy_delete_buffer(YY_CURRENT_BUFFER);
+    currentString = yy_scan_string(inputBuffer);
+    BEGIN(INITIAL);
 }
 
 void _cleanupLex() {
-        yy_delete_buffer(currentString);
+    yy_delete_buffer(currentString);
 }
-
