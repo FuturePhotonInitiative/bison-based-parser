@@ -42,9 +42,9 @@ modprs	{ yylval.command_code = GPIO_PORT_MODPRS; return GPIO_PORT; }
 
 modsel	{ yylval.command_code = GPIO_PORT_MODSEL; return GPIO_PORT; }
 
-pek	    { yylval.command_code = 5; return PEK_CMD; }
+pek	    { return PEK_CMD; }
 
-qsfp	{ yylval.command_code = 6; return QSFP_CMD; }
+qsfp	{ return QSFP_CMD; }
 
 read	{ return READ; }
 
@@ -56,9 +56,9 @@ toggle	{ return TOGGLE; }
 
 write	{ return WRITE; }
 
-cfp     { yylval.command_code = 9; return CFP_CMD; }
+cfp     { return CFP_CMD; }
 
-vcu108  { yylval.command_code = 10; return VCU108_CMD; }
+vcu108  { return VCU108_CMD; }
 
 leds    { yylval.command_code = VCU108_PORT_LEDS; return VCU108_PORT; }
 
