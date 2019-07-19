@@ -15,6 +15,7 @@ int yydebug = 1;
 
 void _setupLexInput(char*);
 void _cleanupLex();
+void invalidateCommand(command *, unsigned char);
 int yyerror(command*, char const *);
 %}
 
@@ -112,9 +113,7 @@ qsfp_command:
         $$.args_len = 1;
         $$.args[0] = $4;
         if ($4 > 3) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_GPIO_PORT;
+            invalidateCommand(&$$, ERROR_INVALID_GPIO_PORT);
         }
     } |
     QSFP_CMD GPIO CLEAR GPIO_PORT {
@@ -122,9 +121,7 @@ qsfp_command:
         $$.args_len = 1;
         $$.args[0] = $4;
         if ($4 > 3) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_GPIO_PORT;
+            invalidateCommand(&$$, ERROR_INVALID_GPIO_PORT);
         }
     } |
     QSFP_CMD GPIO TOGGLE GPIO_PORT {
@@ -132,9 +129,7 @@ qsfp_command:
         $$.args_len = 1;
         $$.args[0] = $4;
         if ($4 > 3) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_GPIO_PORT;
+            invalidateCommand(&$$, ERROR_INVALID_GPIO_PORT);
         }
     } |
     QSFP_CMD EYESCAN {
@@ -152,9 +147,7 @@ qsfp_command:
         $$.args[1] = $5;
         $$.args[2] = $6;
         if ($4 > 3) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_QSFP_IIC_READ_PAGE;
+            invalidateCommand(&$$, ERROR_INVALID_QSFP_IIC_READ_PAGE);
         }
     } |
     QSFP_CMD IIC DEBUG {
@@ -176,23 +169,17 @@ vcu108_command:
         switch ($4) {
             case VCU108_PORT_LEDS:
                 if ($5 > 7) {
-                    $$.command_code = COMMAND_INVALID;
-                    $$.args_len = 1;
-                    $$.args[0] = ERROR_INVALID_GPIO_PIN;
+                    invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
                 }
                 break;
             case VCU108_PORT_BUTTONS:
                 if ($5 > 4) {
-                    $$.command_code = COMMAND_INVALID;
-                    $$.args_len = 1;
-                    $$.args[0] = ERROR_INVALID_GPIO_PIN;
+                    invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
                 }
                 break;
             case VCU108_PORT_SWITCHES:
                 if ($5 > 3) {
-                    $$.command_code = COMMAND_INVALID;
-                    $$.args_len = 1;
-                    $$.args[0] = ERROR_INVALID_GPIO_PIN;
+                    invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
                 }
                 break;
             default:
@@ -209,9 +196,7 @@ vcu108_command:
         $$.args_len = 1;
         $$.args[0] = $4;
         if ($4 > 7) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_GPIO_PIN;
+            invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
         }
     } |
     VCU108_CMD GPIO CLEAR NUMBER {
@@ -219,9 +204,7 @@ vcu108_command:
         $$.args_len = 1;
         $$.args[0] = $4;
         if ($4 > 7) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_GPIO_PIN;
+            invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
         }
     } |
     VCU108_CMD GPIO TOGGLE NUMBER {
@@ -229,9 +212,7 @@ vcu108_command:
         $$.args_len = 1;
         $$.args[0] = $4;
         if ($4 > 7) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_GPIO_PIN;
+            invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
         }
     } |
     VCU108_CMD GPIO DEBUG {
@@ -248,9 +229,7 @@ pek_command:
         $$.args[1] = $5;
 
         if ($4 > 3) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_IIC_WRITE_PAGE;
+            invalidateCommand(&$$, ERROR_INVALID_PEK_IIC_WRITE_PAGE);
         }
         else {
             sprintf($$.args + $$.args_len, "%s", "hex");
@@ -266,9 +245,7 @@ pek_command:
         $$.args[1] = $5;
 
         if ($4 > 3) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_IIC_WRITE_PAGE;
+            invalidateCommand(&$$, ERROR_INVALID_PEK_IIC_WRITE_PAGE);
         }
         else {
             sprintf($$.args + $$.args_len, "%s", "char");
@@ -284,9 +261,7 @@ pek_command:
         $$.args[1] = $5;
         $$.args[2] = $6;
         if ($4 > 3) {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_IIC_READ_PAGE;
+            invalidateCommand(&$$, ERROR_INVALID_PEK_IIC_READ_PAGE);
         }
     } |
     PEK_CMD GPIO READ NUMBER NUMBER {
@@ -349,19 +324,14 @@ pek_command:
                 }
                 break;
             default:
-                $$.command_code = COMMAND_INVALID;
-                $$.args_len = 1;
-                $$.args[0] = ERROR_INVALID_PEK_GPIO_PORT;
-                break;
+                invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PORT);
         }
         if (success) {
             $$.args_len = 2;
             $$.args[0] = $4;
             $$.args[1] = $5;
         } else {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_GPIO_PIN;
+            invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PIN);
         }
     } |
     PEK_CMD GPIO SET NUMBER NUMBER {
@@ -405,19 +375,14 @@ pek_command:
                 }
                 break;
             default:
-                $$.command_code = COMMAND_INVALID;
-                $$.args_len = 1;
-                $$.args[0] = ERROR_INVALID_PEK_GPIO_PORT;
-                break;
+                invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PORT);
         }
         if (success) {
             $$.args_len = 2;
             $$.args[0] = $4;
             $$.args[1] = $5;
         } else {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_GPIO_PIN;
+            invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PIN);
         }
     } |
     PEK_CMD GPIO CLEAR NUMBER NUMBER {
@@ -461,19 +426,14 @@ pek_command:
                 }
                 break;
             default:
-                $$.command_code = COMMAND_INVALID;
-                $$.args_len = 1;
-                $$.args[0] = ERROR_INVALID_PEK_GPIO_PORT;
-                break;
+                invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PORT);
         }
         if (success) {
             $$.args_len = 2;
             $$.args[0] = $4;
             $$.args[1] = $5;
         } else {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_GPIO_PIN;
+            invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PIN);
         }
     } |
     PEK_CMD GPIO TOGGLE NUMBER NUMBER {
@@ -517,19 +477,14 @@ pek_command:
                 }
                 break;
             default:
-                $$.command_code = COMMAND_INVALID;
-                $$.args_len = 1;
-                $$.args[0] = ERROR_INVALID_PEK_GPIO_PORT;
-                break;
+                invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PORT);
         }
         if (success) {
             $$.args_len = 2;
             $$.args[0] = $4;
             $$.args[1] = $5;
         } else {
-            $$.command_code = COMMAND_INVALID;
-            $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_GPIO_PIN;
+            invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PIN);
         }
     } |
     PEK_CMD BERT {
@@ -550,6 +505,12 @@ pek_command:
     };
 
 %%
+
+void invalidateCommand(command *val, unsigned char error_code) {
+    (*val).command_code = COMMAND_INVALID;
+    (*val).args_len = 1;
+    (*val).args[0] = error_code;
+}
 
 int yyerror(command* val, char const * msg) {
     (*val).command_code = -1;
