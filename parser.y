@@ -36,7 +36,6 @@ int yyerror(command*, char const *);
 %token SET
 %token CLEAR
 %token TOGGLE
-%token LIST
 %token <str> STR
 %token BERT
 %token EYESCAN
@@ -91,8 +90,8 @@ cfp_command:
         $$.args_len = 1;
         $$.args[0] = $4;
     } |
-    CFP_CMD DEBUG {
-        $$.command_code = COMMAND_CFP_DEBUG;
+    CFP_CMD GPIO DEBUG {
+        $$.command_code = COMMAND_CFP_GPIO_DEBUG;
         $$.args_len = 0;
     };
 
@@ -158,8 +157,12 @@ qsfp_command:
             $$.args[0] = ERROR_INVALID_QSFP_IIC_READ_PAGE;
         }
     } |
-    QSFP_CMD DEBUG {
-	    $$.command_code = COMMAND_QSFP_DEBUG;
+    QSFP_CMD IIC DEBUG {
+        $$.command_code = COMMAND_QSFP_IIC_DEBUG;
+        $$.args_len = 0;
+    } |
+    QSFP_CMD GPIO DEBUG {
+	    $$.command_code = COMMAND_QSFP_GPIO_DEBUG;
 		$$.args_len = 0;
 	};
 
@@ -231,8 +234,8 @@ vcu108_command:
             $$.args[0] = ERROR_INVALID_GPIO_PIN;
         }
     } |
-    VCU108_CMD DEBUG {
-		$$.command_code = COMMAND_VCU108_DEBUG;
+    VCU108_CMD GPIO DEBUG {
+		$$.command_code = COMMAND_VCU108_GPIO_DEBUG;
 		$$.args_len = 0;
 	};
 
@@ -286,44 +289,247 @@ pek_command:
             $$.args[0] = ERROR_INVALID_PEK_IIC_READ_PAGE;
         }
     } |
-    PEK_CMD GPIO READ GPIO_PORT {
+    PEK_CMD GPIO READ NUMBER NUMBER {
         $$.command_code = COMMAND_PEK_GPIO_READ;
-        $$.args_len = 1;
-        $$.args[0] = $4;
+        unsigned char success = 0;
+        switch ($4) {
+            case 1:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 4:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 2:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 3:
+                    case 4:
+                    case 5:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 3:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 5:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 6:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        success = 1;
+                        break;
+                }
+                break;
+            default:
+                $$.command_code = COMMAND_INVALID;
+                $$.args_len = 1;
+                $$.args[0] = ERROR_INVALID_PEK_GPIO_PORT;
+                break;
+        }
+        if (success) {
+            $$.args_len = 2;
+            $$.args[0] = $4;
+            $$.args[1] = $5;
+        } else {
+            $$.command_code = COMMAND_INVALID;
+            $$.args_len = 1;
+            $$.args[0] = ERROR_INVALID_PEK_GPIO_PIN;
+        }
     } |
-    PEK_CMD GPIO READ ALL_PORT {
-        $$.command_code = COMMAND_PEK_GPIO_READ;
-        $$.args_len = 1;
-        $$.args[0] = GPIO_PORT_ALL;
-    } |
-    PEK_CMD GPIO SET GPIO_PORT {
+    PEK_CMD GPIO SET NUMBER NUMBER {
         $$.command_code = COMMAND_PEK_GPIO_SET;
-        $$.args_len = 1;
-        $$.args[0] = $4;
-        if ($4 > 3) {
+        unsigned char success = 0;
+        switch ($4) {
+            case 1:
+                switch ($5) {
+                    case 0:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 2:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 5:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 5:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 6:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        success = 1;
+                        break;
+                }
+                break;
+            default:
+                $$.command_code = COMMAND_INVALID;
+                $$.args_len = 1;
+                $$.args[0] = ERROR_INVALID_PEK_GPIO_PORT;
+                break;
+        }
+        if (success) {
+            $$.args_len = 2;
+            $$.args[0] = $4;
+            $$.args[1] = $5;
+        } else {
             $$.command_code = COMMAND_INVALID;
             $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_PORT;
+            $$.args[0] = ERROR_INVALID_PEK_GPIO_PIN;
         }
     } |
-    PEK_CMD GPIO CLEAR GPIO_PORT {
+    PEK_CMD GPIO CLEAR NUMBER NUMBER {
         $$.command_code = COMMAND_PEK_GPIO_CLEAR;
-        $$.args_len = 1;
-        $$.args[0] = $4;
-        if ($4 > 3) {
+        unsigned char success = 0;
+        switch ($4) {
+            case 1:
+                switch ($5) {
+                    case 0:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 2:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 5:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 5:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 6:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        success = 1;
+                        break;
+                }
+                break;
+            default:
+                $$.command_code = COMMAND_INVALID;
+                $$.args_len = 1;
+                $$.args[0] = ERROR_INVALID_PEK_GPIO_PORT;
+                break;
+        }
+        if (success) {
+            $$.args_len = 2;
+            $$.args[0] = $4;
+            $$.args[1] = $5;
+        } else {
             $$.command_code = COMMAND_INVALID;
             $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_PORT;
+            $$.args[0] = ERROR_INVALID_PEK_GPIO_PIN;
         }
     } |
-    PEK_CMD GPIO TOGGLE GPIO_PORT {
+    PEK_CMD GPIO TOGGLE NUMBER NUMBER {
         $$.command_code = COMMAND_PEK_GPIO_TOGGLE;
-        $$.args_len = 1;
-        $$.args[0] = $4;
-        if ($4 > 3) {
+        unsigned char success = 0;
+        switch ($4) {
+            case 1:
+                switch ($5) {
+                    case 0:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 2:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 5:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 5:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        success = 1;
+                        break;
+                }
+                break;
+            case 6:
+                switch ($5) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        success = 1;
+                        break;
+                }
+                break;
+            default:
+                $$.command_code = COMMAND_INVALID;
+                $$.args_len = 1;
+                $$.args[0] = ERROR_INVALID_PEK_GPIO_PORT;
+                break;
+        }
+        if (success) {
+            $$.args_len = 2;
+            $$.args[0] = $4;
+            $$.args[1] = $5;
+        } else {
             $$.command_code = COMMAND_INVALID;
             $$.args_len = 1;
-            $$.args[0] = ERROR_INVALID_PEK_PORT;
+            $$.args[0] = ERROR_INVALID_PEK_GPIO_PIN;
         }
     } |
     PEK_CMD BERT {
@@ -334,8 +540,12 @@ pek_command:
         $$.command_code = COMMAND_PEK_EYESCAN;
         $$.args_len = 0;
     } |
-    PEK_CMD DEBUG {
-        $$.command_code = COMMAND_PEK_DEBUG;
+    PEK_CMD GPIO DEBUG {
+        $$.command_code = COMMAND_PEK_GPIO_DEBUG;
+        $$.args_len = 0;
+    } |
+    PEK_CMD IIC DEBUG {
+        $$.command_code = COMMAND_PEK_IIC_DEBUG;
         $$.args_len = 0;
     };
 

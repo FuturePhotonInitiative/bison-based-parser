@@ -104,6 +104,81 @@ void test_pek_iic_write(char *cmd_str, unsigned char ar0, unsigned char ar1, cha
     fflush(fp);
 }
 
+void test_pek_gpio_read(unsigned char port, unsigned char pin, FILE *fp, bool success) {
+    unsigned char args2[2];
+    args2[0] = port;
+    args2[1] = pin;
+    char command_str[50];
+    sprintf(command_str, "pek gpio read %d %d", port, pin);
+    test_int_args(command_str, COMMAND_PEK_GPIO_READ, args2, sizeof(args2), fp, success);
+}
+
+void test_pek_gpio_sct(
+        char *base_command_str, 
+        char *command_str, 
+        unsigned char port, 
+        unsigned char pin,
+        unsigned char command, 
+        FILE *fp, 
+        bool success) {
+    unsigned char args2[2];
+    args2[0] = port;
+    args2[1] = pin;
+    sprintf(command_str, "%s %d %d", base_command_str, port, pin);
+    test_int_args(command_str, command, args2, sizeof(args2), fp, success);
+}
+
+void test_all_pek_gpio_set_clear_toggle(char *sct, FILE *fp) {
+    char base_command_str[20];
+    sprintf(base_command_str, "pek gpio %s", sct);
+    unsigned char args2[2];
+    unsigned char command;
+    switch(sct[0]) {
+        case 's':
+            command = COMMAND_PEK_GPIO_SET;
+            break;
+        case 'c':
+            command = COMMAND_PEK_GPIO_CLEAR;
+            break;
+        case 't':
+            command = COMMAND_PEK_GPIO_TOGGLE;
+            break;
+    }
+    char command_str[50];
+
+    test_pek_gpio_sct(base_command_str, command_str, 0, 0, command, fp, false);
+    test_pek_gpio_sct(base_command_str, command_str, 0, 1, command, fp, false);
+
+    test_pek_gpio_sct(base_command_str, command_str, 1, 0, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 1, 1, command, fp, false);
+
+    test_pek_gpio_sct(base_command_str, command_str, 2, 0, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 2, 1, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 2, 2, command, fp, false);
+    test_pek_gpio_sct(base_command_str, command_str, 2, 3, command, fp, false);
+    test_pek_gpio_sct(base_command_str, command_str, 2, 4, command, fp, false);
+    test_pek_gpio_sct(base_command_str, command_str, 2, 5, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 2, 6, command, fp, false);
+
+    test_pek_gpio_sct(base_command_str, command_str, 3, 0, command, fp, false);
+    test_pek_gpio_sct(base_command_str, command_str, 3, 1, command, fp, false);
+
+    test_pek_gpio_sct(base_command_str, command_str, 4, 0, command, fp, false);
+    test_pek_gpio_sct(base_command_str, command_str, 4, 1, command, fp, false);
+
+    test_pek_gpio_sct(base_command_str, command_str, 5, 0, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 5, 1, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 5, 2, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 5, 3, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 5, 4, command, fp, false);
+
+    test_pek_gpio_sct(base_command_str, command_str, 6, 0, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 6, 1, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 6, 2, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 6, 3, command, fp, true);
+    test_pek_gpio_sct(base_command_str, command_str, 6, 4, command, fp, false);
+}
+
 int main() {
 
     FILE *fp = fopen("new_commands.txt", "w");
@@ -196,9 +271,12 @@ int main() {
     test_int_args("cfp gpio toggle all", COMMAND_CFP_GPIO_TOGGLE, args1, sizeof(args1), fp, false);
 
 
-    //****** cfp debug ******//
+    //****** cfp gpio debug ******//
     // normal usages
-    test_int_args("cfp debug", COMMAND_CFP_DEBUG, 0, 0, fp, true);
+    test_int_args("cfp gpio debug", COMMAND_CFP_GPIO_DEBUG, 0, 0, fp, true);
+    // should not take any arguments
+    args1[0] = 0;
+    test_int_args("cfp gpio debug 0", COMMAND_CFP_GPIO_DEBUG, args1, sizeof(args1), fp, false);
 
 
     //****** qsfp gpio read ******//
@@ -299,12 +377,20 @@ int main() {
     test_int_args("qsfp iic read -3 255 255", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, false);
 
 
+    //****** qsfp iic debug ******//
+    // normal usages
+    test_int_args("qsfp iic debug", COMMAND_QSFP_IIC_DEBUG, 0, 0, fp, true);
+    // should not take any arguments
+    args1[0] = 0;
+    test_int_args("qsfp iic debug 0", COMMAND_QSFP_IIC_DEBUG, args1, sizeof(args1), fp, false);
+
+
     //****** qsfp bert ******//
     // normal usages
     test_int_args("qsfp bert", COMMAND_QSFP_BERT, 0, 0, fp, true);
     // should not take any arguments
     args1[0] = 0;
-    test_int_args("qsfp bert 0", COMMAND_QSFP_BERT, 0, 0, fp, false);
+    test_int_args("qsfp bert 0", COMMAND_QSFP_BERT, args1, sizeof(args1), fp, false);
 
 
     //****** qsfp eyescan ******//
@@ -312,22 +398,22 @@ int main() {
     test_int_args("qsfp eyescan", COMMAND_QSFP_EYESCAN, 0, 0, fp, true);
     // should not take any arguments
     args1[0] = 0;
-    test_int_args("qsfp eyescan 0", COMMAND_QSFP_EYESCAN, 0, 0, fp, false);
+    test_int_args("qsfp eyescan 0", COMMAND_QSFP_EYESCAN, args1, sizeof(args1), fp, false);
 
 
-    //****** qsfp debug ******//
+    //****** qsfp gpio debug ******//
     // normal usages
-    test_int_args("qsfp debug", COMMAND_QSFP_DEBUG, 0, 0, fp, true);
+    test_int_args("qsfp gpio debug", COMMAND_QSFP_GPIO_DEBUG, 0, 0, fp, true);
     // should not take any arguments
     args1[0] = 0;
-    test_int_args("qsfp debug 0", COMMAND_QSFP_DEBUG, 0, 0, fp, false);
+    test_int_args("qsfp gpio debug 0", COMMAND_QSFP_GPIO_DEBUG, args1, sizeof(args1), fp, false);
 
 
-    //****** vcu108 debug ******//
-    test_int_args("vcu108 debug", COMMAND_VCU108_DEBUG, 0, 0, fp, true);
+    //****** vcu108 gpio debug ******//
+    test_int_args("vcu108 gpio debug", COMMAND_VCU108_GPIO_DEBUG, 0, 0, fp, true);
     // should not take any arguments
     args1[0] = 0;
-    test_int_args("vcu108 debug 0", COMMAND_VCU108_DEBUG, 0, 0, fp, false);
+    test_int_args("vcu108 gpio debug 0", COMMAND_VCU108_GPIO_DEBUG, args1, sizeof(args1), fp, false);
 
 
     //****** vcu108 gpio read ******//
@@ -403,76 +489,61 @@ int main() {
 
 
     //****** pek gpio read ******//
-    // normal usages
-    args1[0] = GPIO_PORT_MODSEL;
-    test_int_args("pek gpio read modsel", COMMAND_PEK_GPIO_READ, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_RESET;
-    test_int_args("pek gpio read reset", COMMAND_PEK_GPIO_READ, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_LPMODE;
-    test_int_args("pek gpio read lpmode", COMMAND_PEK_GPIO_READ, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_MODPRS;
-    test_int_args("pek gpio read modprs", COMMAND_PEK_GPIO_READ, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_INT;
-    test_int_args("pek gpio read int", COMMAND_PEK_GPIO_READ, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_ALL;
-    test_int_args("pek gpio read all", COMMAND_PEK_GPIO_READ, args1, sizeof(args1), fp, true);
+    test_pek_gpio_read(0, 0, fp, false);
+    test_pek_gpio_read(0, 1, fp, false);
+
+    test_pek_gpio_read(1, 0, fp, true);
+    test_pek_gpio_read(1, 1, fp, true);
+    test_pek_gpio_read(1, 2, fp, false);
+    test_pek_gpio_read(1, 3, fp, false);
+    test_pek_gpio_read(1, 4, fp, true);
+    test_pek_gpio_read(1, 5, fp, false);
+
+    test_pek_gpio_read(2, 0, fp, true);
+    test_pek_gpio_read(2, 1, fp, true);
+    test_pek_gpio_read(2, 2, fp, false);
+    test_pek_gpio_read(2, 3, fp, true);
+    test_pek_gpio_read(2, 4, fp, true);
+    test_pek_gpio_read(2, 5, fp, true);
+    test_pek_gpio_read(2, 6, fp, false);
+
+    test_pek_gpio_read(3, 0, fp, true);
+    test_pek_gpio_read(3, 1, fp, true);
+    test_pek_gpio_read(3, 2, fp, true);
+    test_pek_gpio_read(3, 3, fp, true);
+    test_pek_gpio_read(3, 4, fp, true);
+    test_pek_gpio_read(3, 5, fp, true);
+    test_pek_gpio_read(3, 6, fp, true);
+    test_pek_gpio_read(3, 7, fp, true);
+    test_pek_gpio_read(3, 8, fp, false);
+
+    test_pek_gpio_read(4, 0, fp, false);
+    test_pek_gpio_read(4, 1, fp, false);
+
+    test_pek_gpio_read(5, 0, fp, true);
+    test_pek_gpio_read(5, 1, fp, true);
+    test_pek_gpio_read(5, 2, fp, true);
+    test_pek_gpio_read(5, 3, fp, true);
+    test_pek_gpio_read(5, 4, fp, true);
+    test_pek_gpio_read(5, 5, fp, false);
+
+    test_pek_gpio_read(6, 0, fp, true);
+    test_pek_gpio_read(6, 1, fp, true);
+    test_pek_gpio_read(6, 2, fp, true);
+    test_pek_gpio_read(6, 3, fp, true);
+    test_pek_gpio_read(6, 4, fp, false);
 
 
     //****** pek gpio set ******//
-    // normal usages
-    args1[0] = GPIO_PORT_MODSEL;
-    test_int_args("pek gpio set modsel", COMMAND_PEK_GPIO_SET, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_RESET;
-    test_int_args("pek gpio set reset", COMMAND_PEK_GPIO_SET, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_LPMODE;
-    test_int_args("pek gpio set lpmode", COMMAND_PEK_GPIO_SET, args1, sizeof(args1), fp, true);
-    // no modprs for set
-    args1[0] = GPIO_PORT_MODPRS;
-    test_int_args("pek gpio set modprs", COMMAND_PEK_GPIO_SET, args1, sizeof(args1), fp, false);
-    // no int for set
-    args1[0] = GPIO_PORT_INT;
-    test_int_args("pek gpio set int", COMMAND_PEK_GPIO_SET, args1, sizeof(args1), fp, false);
-    // no all for set
-    args1[0] = GPIO_PORT_ALL;
-    test_int_args("pek gpio set all", COMMAND_PEK_GPIO_SET, args1, sizeof(args1), fp, false);
+    test_all_pek_gpio_set_clear_toggle("set", fp);
 
 
     //****** pek gpio clear ******//
-    // normal usages
-    args1[0] = GPIO_PORT_MODSEL;
-    test_int_args("pek gpio clear modsel", COMMAND_PEK_GPIO_CLEAR, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_RESET;
-    test_int_args("pek gpio clear reset", COMMAND_PEK_GPIO_CLEAR, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_LPMODE;
-    test_int_args("pek gpio clear lpmode", COMMAND_PEK_GPIO_CLEAR, args1, sizeof(args1), fp, true);
-    // no modprs for clear
-    args1[0] = GPIO_PORT_MODPRS;
-    test_int_args("pek gpio clear modprs", COMMAND_PEK_GPIO_CLEAR, args1, sizeof(args1), fp, false);
-    // no int for clear
-    args1[0] = GPIO_PORT_INT;
-    test_int_args("pek gpio clear int", COMMAND_PEK_GPIO_CLEAR, args1, sizeof(args1), fp, false);
-    // no all for clear
-    args1[0] = GPIO_PORT_ALL;
-    test_int_args("pek gpio clear all", COMMAND_PEK_GPIO_CLEAR, args1, sizeof(args1), fp, false);
+    test_all_pek_gpio_set_clear_toggle("clear", fp);
 
 
     //****** pek gpio toggle ******//
-    // normal usages
-    args1[0] = GPIO_PORT_MODSEL;
-    test_int_args("pek gpio toggle modsel", COMMAND_PEK_GPIO_TOGGLE, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_RESET;
-    test_int_args("pek gpio toggle reset", COMMAND_PEK_GPIO_TOGGLE, args1, sizeof(args1), fp, true);
-    args1[0] = GPIO_PORT_LPMODE;
-    test_int_args("pek gpio toggle lpmode", COMMAND_PEK_GPIO_TOGGLE, args1, sizeof(args1), fp, true);
-    // no modprs for toggle
-    args1[0] = GPIO_PORT_MODPRS;
-    test_int_args("pek gpio toggle modprs", COMMAND_PEK_GPIO_TOGGLE, args1, sizeof(args1), fp, false);
-    // no int for toggle
-    args1[0] = GPIO_PORT_INT;
-    test_int_args("pek gpio toggle int", COMMAND_PEK_GPIO_TOGGLE, args1, sizeof(args1), fp, false);
-    // no all for toggle
-    args1[0] = GPIO_PORT_ALL;
-    test_int_args("pek gpio toggle all", COMMAND_PEK_GPIO_TOGGLE, args1, sizeof(args1), fp, false);
+    test_all_pek_gpio_set_clear_toggle("toggle", fp);
 
 
     /****** pek iic write ******/
@@ -542,12 +613,20 @@ int main() {
     test_int_args("pek eyescan 0", COMMAND_PEK_EYESCAN, args1, sizeof(args1), fp, false);
 
 
-    //****** pek debug ******//
+    //****** pek gpio debug ******//
     // normal usage
-    test_int_args("pek debug", COMMAND_PEK_DEBUG, 0, 0, fp, true);
+    test_int_args("pek gpio debug", COMMAND_PEK_GPIO_DEBUG, 0, 0, fp, true);
     // should not take any arguments
     args1[0] = 0;
-    test_int_args("pek debug", COMMAND_PEK_DEBUG, args1, sizeof(args1), fp, false);
+    test_int_args("pek gpio debug 0", COMMAND_PEK_GPIO_DEBUG, args1, sizeof(args1), fp, false);
+
+
+    //****** pek iic debug ******//
+    // normal usage
+    test_int_args("pek iic debug", COMMAND_PEK_IIC_DEBUG, 0, 0, fp, true);
+    // should not take any arguments
+    args1[0] = 0;
+    test_int_args("pek iic debug 0", COMMAND_PEK_IIC_DEBUG, args1, sizeof(args1), fp, false);
 
 
     fprintf(fp, "\n---Failed assertion count: %d---\n", fail_assertion_count);

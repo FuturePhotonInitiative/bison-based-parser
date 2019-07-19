@@ -49,10 +49,10 @@ void call_command(command cmd) {
         case COMMAND_QSFP_EYESCAN:
             xil_printf(USE_PTCS);
             break;
-        case COMMAND_QSFP_DEBUG:
+        case COMMAND_QSFP_GPIO_DEBUG:
             qsfp_debug_iic();
             break;
-        case COMMAND_VCU108_DEBUG:
+        case COMMAND_VCU108_GPIO_DEBUG:
             vcu108_debug();
             break;
         case COMMAND_VCU108_GPIO_READ:
