@@ -309,9 +309,8 @@ int main() {
     // cannot set int
     args1[0] = GPIO_PORT_INT;
     test_int_args("qsfp gpio set int", COMMAND_QSFP_GPIO_SET, args1, sizeof(args1), fp, false);
-    // cannot set all
     args1[0] = GPIO_PORT_ALL;
-    test_int_args("qsfp gpio set all", COMMAND_QSFP_GPIO_SET, args1, sizeof(args1), fp, false);
+    test_int_args("qsfp gpio set all", COMMAND_QSFP_GPIO_SET, args1, sizeof(args1), fp, true);
 
 
     //****** qsfp gpio clear ******//
@@ -328,9 +327,8 @@ int main() {
     // cannot clear int
     args1[0] = GPIO_PORT_INT;
     test_int_args("qsfp gpio clear int", COMMAND_QSFP_GPIO_CLEAR, args1, sizeof(args1), fp, false);
-    // cannot clear all
     args1[0] = GPIO_PORT_ALL;
-    test_int_args("qsfp gpio clear all", COMMAND_QSFP_GPIO_CLEAR, args1, sizeof(args1), fp, false);
+    test_int_args("qsfp gpio clear all", COMMAND_QSFP_GPIO_CLEAR, args1, sizeof(args1), fp, true);
 
 
     //****** qsfp gpio toggle ******//
@@ -347,9 +345,8 @@ int main() {
     // cannot toggle int
     args1[0] = GPIO_PORT_INT;
     test_int_args("qsfp gpio toggle int", COMMAND_QSFP_GPIO_TOGGLE, args1, sizeof(args1), fp, false);
-    // cannot toggle all
     args1[0] = GPIO_PORT_ALL;
-    test_int_args("qsfp gpio toggle all", COMMAND_QSFP_GPIO_TOGGLE, args1, sizeof(args1), fp, false);
+    test_int_args("qsfp gpio toggle all", COMMAND_QSFP_GPIO_TOGGLE, args1, sizeof(args1), fp, true);
 
 
     //****** qsfp iic read ******//

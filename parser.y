@@ -109,28 +109,58 @@ qsfp_command:
         $$.args[0] = GPIO_PORT_ALL;
     } |
     QSFP_CMD GPIO SET GPIO_PORT {
+        switch ($4) {
+            case GPIO_PORT_MODSEL:
+            case GPIO_PORT_RESET:
+            case GPIO_PORT_LPMODE:
+                $$.command_code = COMMAND_QSFP_GPIO_SET;
+                $$.args_len = 1;
+                $$.args[0] = $4;
+                break;
+            default:
+                invalidateCommand(&$$, ERROR_INVALID_GPIO_PORT);
+        }
+    } |
+    QSFP_CMD GPIO SET ALL_PORT {
         $$.command_code = COMMAND_QSFP_GPIO_SET;
         $$.args_len = 1;
-        $$.args[0] = $4;
-        if ($4 > 3) {
-            invalidateCommand(&$$, ERROR_INVALID_GPIO_PORT);
-        }
+        $$.args[0] = GPIO_PORT_ALL;
     } |
     QSFP_CMD GPIO CLEAR GPIO_PORT {
-        $$.command_code = COMMAND_QSFP_GPIO_CLEAR;
-        $$.args_len = 1;
-        $$.args[0] = $4;
-        if ($4 > 3) {
-            invalidateCommand(&$$, ERROR_INVALID_GPIO_PORT);
+        switch ($4) {
+            case GPIO_PORT_MODSEL:
+            case GPIO_PORT_RESET:
+            case GPIO_PORT_LPMODE:
+                $$.command_code = COMMAND_QSFP_GPIO_CLEAR;
+                $$.args_len = 1;
+                $$.args[0] = $4;
+                break;
+            default:
+                invalidateCommand(&$$, ERROR_INVALID_GPIO_PORT);
         }
     } |
+    QSFP_CMD GPIO CLEAR ALL_PORT {
+        $$.command_code = COMMAND_QSFP_GPIO_CLEAR;
+        $$.args_len = 1;
+        $$.args[0] = GPIO_PORT_ALL;
+    } |
     QSFP_CMD GPIO TOGGLE GPIO_PORT {
+        switch ($4) {
+            case GPIO_PORT_MODSEL:
+            case GPIO_PORT_RESET:
+            case GPIO_PORT_LPMODE:
+                $$.command_code = COMMAND_QSFP_GPIO_TOGGLE;
+                $$.args_len = 1;
+                $$.args[0] = $4;
+                break;
+            default:
+                invalidateCommand(&$$, ERROR_INVALID_GPIO_PORT);
+        }
+    } |
+    QSFP_CMD GPIO TOGGLE ALL_PORT {
         $$.command_code = COMMAND_QSFP_GPIO_TOGGLE;
         $$.args_len = 1;
-        $$.args[0] = $4;
-        if ($4 > 3) {
-            invalidateCommand(&$$, ERROR_INVALID_GPIO_PORT);
-        }
+        $$.args[0] = GPIO_PORT_ALL;
     } |
     QSFP_CMD EYESCAN {
         $$.command_code = COMMAND_QSFP_EYESCAN;

@@ -26,9 +26,9 @@ char *unmap_gpio[] = {
 
 char *unmap_vcu108_port[] = {
     "",
-    "LEDS",
-    "BUTTONS",
-    "SWITCHES",
+    "LED",
+    "BUTTON",
+    "SWITCH",
     "ALL"
 };
 
