@@ -13,6 +13,36 @@
 #include "qsfp_gpio.h"
 #include "pek.h"
 
+char *USE_PTCS = "Please use PIC Test Control Software to complete this task\r\n";
+
+char *unmap_gpio[] = {
+    "",
+    "MODSEL",
+    "RESET",
+    "MODPRS",
+    "INT",
+    "LPMODE",
+    "ALL"
+};
+
+char *unmap_vcu108_port[] = {
+    "",
+    "LED",
+    "BUTTON",
+    "SWITCH",
+    "ALL"
+};
+
+char *unmap_cfp_port[] = {
+    "",
+    "prg_cntl1",
+    "prg_cntl2",
+    "prg_cntl3",
+    "tx_dis",
+    "mod_lopwr",
+    "mod_rstn"
+};
+
 void call_command(command cmd) {
     int status;
     switch (cmd.command_code) {
@@ -33,8 +63,8 @@ void call_command(command cmd) {
             // break;
             xil_printf("Command not yet implemented\r\n");
             break;
-        case COMMAND_QSFP_GPIO_READ:
-            char *port = unmap_gpio[cmd.args[0]]
+        case COMMAND_QSFP_GPIO_READ: {
+        	char *port = unmap_gpio[cmd.args[0]];
             status = qsfp_gpio_read(port);
             if (status != XST_INVALID_PARAM) {
                 if (cmd.args[0] == GPIO_PORT_ALL) {
@@ -47,27 +77,34 @@ void call_command(command cmd) {
                 xil_printf("An unknown error has occurred with port %s\r\n", port);
             }
             break;
-        case COMMAND_QSFP_GPIO_SET:
-            status = qsfp_gpio_set(unmap_gpio[cmd.args[0]]);
-            if (status == XST_SUCCESS)
+        }
+        case COMMAND_QSFP_GPIO_SET: {
+        	char *port = unmap_gpio[cmd.args[0]];
+			status = qsfp_gpio_set(port);
+			if (status == XST_SUCCESS)
 				xil_printf("%s has been set\r\n", port);
 			else
 				xil_printf("An error occurred while setting port: %s\r\n", port);
-            break;
-        case COMMAND_QSFP_GPIO_CLEAR:
-            status = qsfp_gpio_clear(unmap_gpio[cmd.args[0]]);	
+			break;
+        }
+        case COMMAND_QSFP_GPIO_CLEAR: {
+        	char *port = unmap_gpio[cmd.args[0]];
+            status = qsfp_gpio_clear(port);
 			if (status == XST_SUCCESS)
 				xil_printf("%s has been cleared\r\n", port);
 			else
 				xil_printf("An error occurred while clearing port: %s\r\n", port);
             break;
-        case COMMAND_QSFP_GPIO_TOGGLE:
-            qsfp_gpio_toggle(unmap_gpio[cmd.args[0]]);
+        }
+        case COMMAND_QSFP_GPIO_TOGGLE: {
+        	char *port = unmap_gpio[cmd.args[0]];
+            status = qsfp_gpio_toggle(port);
             if (status == XST_SUCCESS)
 				xil_printf("%s has been toggled\r\n", port);
 			else
 				xil_printf("An error occurred while toggling port: %s\r\n", port);
             break;
+        }
         case COMMAND_QSFP_GPIO_DEBUG:
             qsfp_gpio_debug();
             break;
@@ -83,7 +120,7 @@ void call_command(command cmd) {
         case COMMAND_QSFP_EYESCAN:
             xil_printf(USE_PTCS);
             break;
-        case COMMAND_VCU108_GPIO_READ:
+        case COMMAND_VCU108_GPIO_READ: {
             char *port = unmap_vcu108_port[cmd.args[0]];
             status = vcu108_gpio_read(port, cmd.args[1]);
             if (cmd.args[0] == VCU108_PORT_ALL) {
@@ -95,6 +132,7 @@ void call_command(command cmd) {
                 xil_printf("%s[%d] = %d\r\n", port, cmd.args[1], status);
             }
             break;
+        }
         case COMMAND_VCU108_GPIO_SET:
             vcu108_gpio_set(cmd.args[0]);
             xil_printf("LED[%d] = 1\r\n", cmd.args[0]);
@@ -110,13 +148,13 @@ void call_command(command cmd) {
         case COMMAND_VCU108_GPIO_DEBUG:
             vcu108_gpio_debug();
             break;
-        case COMMAND_PEK_GPIO_READ:
+        case COMMAND_PEK_GPIO_READ: {
             // code copied from the EE's command caller
             u8 data[31];
             status = pek_gpio_read(cmd.args[0], cmd.args[1], data);
             switch (status) {
                 case XST_SUCCESS:
-                    xil_printf("The read value of Port %d, Pin %d = %d\r\n", port, pin, data[0]);
+                    xil_printf("The read value of Port %d, Pin %d = %d\r\n", cmd.args[0], cmd.args[1], data[0]);
                     xil_printf("Data: [");
                     for (int i = 0; i <= 30; i++) {
                         xil_printf("%d ", data[i]);
@@ -142,6 +180,7 @@ void call_command(command cmd) {
                     xil_printf("Invalid status received from pek_gpio_read()\r\n");
             }
             break;
+        }
         case COMMAND_PEK_GPIO_SET:
             status = pek_gpio_set(cmd.args[0], cmd.args[1]);
             switch (status) {
@@ -192,10 +231,10 @@ void call_command(command cmd) {
 					xil_printf("Invalid status received from pek_gpio_clear()\r\n");
 			}
             break;
-        case COMMAND_PEK_GPIO_TOGGLE:
+        case COMMAND_PEK_GPIO_TOGGLE: {
             // code copied from the EE's command caller
             u8 data[31];
-            status = pek_gpio_toggle(cmd.args[0], cmd.args[1]);
+            status = pek_gpio_toggle(cmd.args[0], cmd.args[1], data);
             switch (status) {
 				case XST_SUCCESS:
 					xil_printf("The pin has been toggled\r\n");
@@ -226,14 +265,15 @@ void call_command(command cmd) {
 					xil_printf("Invalid status received from pek_gpio_toggle()\r\n");
 			}
             break;
+        }
         case COMMAND_PEK_GPIO_DEBUG:
             pek_gpio_debug();
             break;
         case COMMAND_PEK_IIC_READ:
             qsfp_iic_read(cmd.args[0], cmd.args[1], cmd.args[2]);
             break;
-        case COMMAND_PEK_IIC_WRITE:
-            unsigned char data_start_index = 6;
+        case COMMAND_PEK_IIC_WRITE: {
+            unsigned int data_start_index = 6;
             if (cmd.args[2] == 'c') {
                 // the data type is "char" not "hex", which is one more character
                 data_start_index += 1;
@@ -242,6 +282,7 @@ void call_command(command cmd) {
             qsfp_iic_write(cmd.args[0], cmd.args[1], cmd.args + 2, cmd.args + data_start_index);
             xil_printf("\r\nNew Data: %s\r\n", cmd.args + data_start_index);
             break;
+        }
         case COMMAND_PEK_IIC_DEBUG:
             pek_iic_debug();
             break;

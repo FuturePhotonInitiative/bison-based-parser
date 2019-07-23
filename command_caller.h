@@ -12,36 +12,6 @@
 
 #include "parser.h"
 
-char *USE_PTCS = "Please use PIC Test Control Software to complete this task\r\n";
-
-char *unmap_gpio[] = {
-    "",
-    "MODSEL",
-    "RESET",
-    "MODPRS",
-    "INT",
-    "LPMODE",
-    "ALL"
-};
-
-char *unmap_vcu108_port[] = {
-    "",
-    "LED",
-    "BUTTON",
-    "SWITCH",
-    "ALL"
-};
-
-char *unmap_cfp_port[] = {
-    "",
-    "prg_cntl1",
-    "prg_cntl2",
-    "prg_cntl3",
-    "tx_dis",
-    "mod_lopwr",
-    "mod_rstn"
-};
-
 void call_command(command cmd);
 
 #endif
