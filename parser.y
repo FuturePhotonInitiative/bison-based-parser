@@ -164,7 +164,7 @@ qsfp_command:
     } |
     QSFP_CMD EYESCAN {
         $$.command_code = COMMAND_QSFP_EYESCAN;
-        $$.args_len = 0;	
+        $$.args_len = 0;
     } |
     QSFP_CMD BERT {
         $$.command_code = COMMAND_QSFP_BERT;
@@ -178,6 +178,9 @@ qsfp_command:
         $$.args[2] = $6;
         if ($4 > 3) {
             invalidateCommand(&$$, ERROR_INVALID_QSFP_IIC_READ_PAGE);
+        }
+        else if ($5 >= $6) {
+            invalidateCommand(&$$, ERROR_START_ADDR_NOT_LESS_THAN_END);
         }
     } |
     QSFP_CMD IIC DEBUG {
@@ -292,6 +295,8 @@ pek_command:
         $$.args[2] = $6;
         if ($4 > 3) {
             invalidateCommand(&$$, ERROR_INVALID_PEK_IIC_READ_PAGE);
+        } else if ($5 >= $6) {
+            invalidateCommand(&$$, ERROR_START_ADDR_NOT_LESS_THAN_END);
         }
     } |
     PEK_CMD GPIO READ NUMBER NUMBER {

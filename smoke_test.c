@@ -353,20 +353,25 @@ int main() {
     // normal usages
     args3[0] = 0;
     args3[1] = 0;
-    args3[2] = 0;
-    test_int_args("qsfp iic read 0 0 0", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, true);
+    args3[2] = 1;
+    test_int_args("qsfp iic read 0 0 1", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, true);
     args3[0] = 3;
-    args3[1] = 255;
+    args3[1] = 254;
     args3[2] = 255;
-    test_int_args("qsfp iic read 3 255 255", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, true);
+    test_int_args("qsfp iic read 3 254 255", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, true);
+    args3[0] = 2;
+    args3[1] = 154;
+    args3[2] = 200;
+    test_int_args("qsfp iic read 2 154 200", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, true);
+    // start > end
     args3[0] = 2;
     args3[1] = 200;
     args3[2] = 154;
-    test_int_args("qsfp iic read 2 200 154", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, true);
+    test_int_args("qsfp iic read 2 200 154", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, false);
+    // 3 is the limit for arg0
     args3[0] = 4;
     args3[1] = 255;
     args3[2] = 255;
-    // 3 is the limit for arg0
     test_int_args("qsfp iic read 4 255 255", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, false);
     // 256 will parse to a string instead of an int which sufficiently makes it fail
     test_int_args("qsfp iic read 4 255 256", COMMAND_QSFP_IIC_READ, args3, sizeof(args3), fp, false);
@@ -575,23 +580,33 @@ int main() {
 
     //****** pek iic read ******//
     // normal usages, min, max
+    // normal usages
     args3[0] = 0;
     args3[1] = 0;
-    args3[2] = 0;
-    test_int_args("pek iic read 0 0 0", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, true);
+    args3[2] = 1;
+    test_int_args("pek iic read 0 0 1", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, true);
     args3[0] = 3;
-    args3[1] = 255;
+    args3[1] = 254;
     args3[2] = 255;
-    test_int_args("pek iic read 3 255 255", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, true);
+    test_int_args("pek iic read 3 254 255", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, true);
+    args3[0] = 2;
+    args3[1] = 154;
+    args3[2] = 200;
+    test_int_args("pek iic read 2 154 200", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, true);
+    // start > end
     args3[0] = 2;
     args3[1] = 200;
     args3[2] = 154;
-    test_int_args("pek iic read 2 200 154", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, true);
-    // 3 is max for the 0th arg
+    test_int_args("pek iic read 2 200 154", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, false);
+    // 3 is the limit for arg0
     args3[0] = 4;
     args3[1] = 255;
     args3[2] = 255;
     test_int_args("pek iic read 4 255 255", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, false);
+    // 256 will parse to a string instead of an int which sufficiently makes it fail
+    test_int_args("pek iic read 3 255 256", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, false);
+    // negative numbers will be parsed as strings
+    test_int_args("pek iic read -3 255 255", COMMAND_PEK_IIC_READ, args3, sizeof(args3), fp, false);
 
 
     //****** pek bert ******//
