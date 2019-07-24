@@ -78,21 +78,27 @@ mod_lopwr   { yylval.command_code = CFP_PORT_MOD_LOPWR; return CFP_PORT; }
 
 mod_rstn    { yylval.command_code = CFP_PORT_MOD_RSTN; return CFP_PORT; }
 
-hex     { return HEX_TYPE; }
+char    { return CHAR; }
 
-char    { return CHAR_TYPE; }
+hex     { return HEX; }
 
-(0x)?[0-9a-fA-F]* { 
-    long tmp = strtol(yytext, NULL, 0);
-    if (tmp >= 0 && tmp < 256) {
-        yylval.num = tmp;
+[0-9]+ { 
+    long parsed_num = strtol(yytext, NULL, 10);
+    if (parsed_num >= 0 && parsed_num < 256) {
+        yylval.num = parsed_num;
         return NUMBER;
     }
 }
 
-[\'\"][^\'\"]+[\'\"] {
-    strncpy(yylval.str, yytext, MAX_ARGS);
-    yylval.str[MAX_ARGS - 1] = '\0';
+\"[0-9a-fA-F]{2}([ ][0-9a-fA-F]{2})*\" {
+    strncpy(yylval.str, yytext + 1, strlen(yytext) - 2);
+    yylval.str[strlen(yytext) - 2] = '\0';
+    return HEX_STR;
+}
+
+\"[^\"]+\" {
+    strncpy(yylval.str, yytext + 1, strlen(yytext) - 2);
+    yylval.str[strlen(yytext) - 2] = '\0';
     return STR;
 }
 

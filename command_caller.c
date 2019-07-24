@@ -15,6 +15,8 @@
 
 char *USE_PTCS = "Please use PIC Test Control Software to complete this task\r\n";
 
+// the Bison parser returns structs with integers determining the types of some arguments.
+// in this case, the index of the map indicates the location of the string to put into the specified files.
 char *unmap_gpio[] = {
     "",
     "MODSEL",
@@ -42,6 +44,12 @@ char *unmap_cfp_port[] = {
     "mod_lopwr",
     "mod_rstn"
 };
+
+char *unmap_data_type[] = {
+    "",
+    "CHAR",
+    "HEX",
+}
 
 void call_command(command cmd) {
     int status;
@@ -273,14 +281,8 @@ void call_command(command cmd) {
             qsfp_iic_read(cmd.args[0], cmd.args[1], cmd.args[2]);
             break;
         case COMMAND_PEK_IIC_WRITE: {
-            unsigned int data_start_index = 6;
-            if (cmd.args[2] == 'c') {
-                // the data type is "char" not "hex", which is one more character
-                data_start_index += 1;
-            }
-            xil_printf("\r\n-----------------------Writing %d byte(s) from address %d to %d --------------------- \r\n", strlen(cmd.args + data_start_index), cmd.args[1], cmd.args[1] + strlen(cmd.args + data_start_index));
-            qsfp_iic_write(cmd.args[0], cmd.args[1], cmd.args + 2, cmd.args + data_start_index);
-            xil_printf("\r\nNew Data: %s\r\n", cmd.args + data_start_index);
+            qsfp_iic_write(cmd.args[0], cmd.args[1], unmap_data_type[cmd.args[2]], &cmd.args[3]);
+            xil_printf("\r\nNew Data: %s\r\n", &cmd.args[3]);
             break;
         }
         case COMMAND_PEK_IIC_DEBUG:
@@ -312,6 +314,7 @@ void call_command(command cmd) {
                     xil_printf("the end index when reading needs to be greater than the start index\r\n");
                     break;
                 case ERROR_PEK_WRITE_DATA_TOO_LONG:
+                    xil_printf("your input data is too large. Its length must be less than 255 minus the start address")
                     break;
                 case ERROR_INVALID_PEK_IIC_WRITE_PAGE:
                     xil_printf("the pek write page is out of bounds\r\n");
@@ -326,7 +329,8 @@ void call_command(command cmd) {
                     xil_printf("the pek read page is out of bounds\r\n");
                     break;
                 case ERROR_OTHER:
-                    xil_printf("the structure of the command is invalid\r\n");
+                    xil_printf(cmd.args[1]);
+                    xil_printf("\r\n");
                     break;
                 default:
                     xil_printf("you produced an error that was caught by the parser, but not by the command caller. This should be fixed\r\n");

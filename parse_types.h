@@ -2,6 +2,7 @@
 #define PARSE_TYPES_H
 
 #define MAX_ARGS 50
+#define MAX_COMMAND_ARGS 150
 
 #define GPIO_PORT_MODSEL 1
 #define GPIO_PORT_RESET 2
@@ -23,10 +24,13 @@
 #define CFP_PORT_MOD_RSTN 6
 #define CFP_PORT_ALL 7
 
+#define WRITE_DATA_TYPE_CHAR 1
+#define WRITE_DATA_TYPE_HEX 2
+
 typedef struct command {
 	unsigned char command_code;
 	unsigned char args_len;
-	unsigned char args[MAX_ARGS];
+	unsigned char args[MAX_COMMAND_ARGS];
 } command;
 
 #endif

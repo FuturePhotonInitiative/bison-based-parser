@@ -19,6 +19,8 @@ void invalidateCommand(command *, unsigned char);
 int yyerror(command*, char const *);
 %}
 
+%define parse.error verbose
+
 %parse-param {command *command_val}
 
 %token CFP_CMD
@@ -38,11 +40,12 @@ int yyerror(command*, char const *);
 %token CLEAR
 %token TOGGLE
 %token <str> STR
+%token <str> HEX_STR
 %token BERT
 %token EYESCAN
 %token IIC
-%token HEX_TYPE
-%token CHAR_TYPE
+%token CHAR
+%token HEX
 
 %type <cmd> command
 %type <cmd> cfp_command
@@ -52,8 +55,8 @@ int yyerror(command*, char const *);
 
 %union {
     char command_code;
-    char num;
-    char str [MAX_ARGS];
+    unsigned char num;
+    char str[MAX_ARGS];
     command cmd;
 }
 
@@ -255,36 +258,47 @@ vcu108_command:
 
 
 pek_command: 
-    PEK_CMD IIC WRITE NUMBER NUMBER HEX_TYPE STR {
+    PEK_CMD IIC WRITE NUMBER NUMBER HEX HEX_STR {
         $$.command_code = COMMAND_PEK_IIC_WRITE;
-        $$.args_len = 2;
+        $$.args_len = 3;
         $$.args[0] = $4;
         $$.args[1] = $5;
-
+        $$.args[2] = WRITE_DATA_TYPE_HEX;
         if ($4 > 3) {
             invalidateCommand(&$$, ERROR_INVALID_PEK_IIC_WRITE_PAGE);
-        }
-        else {
-            sprintf($$.args + $$.args_len, "%s", "hex");
-            $$.args_len += 4;
-            sprintf($$.args + $$.args_len, "%s", $7);
-            $$.args_len += strlen($7) + 1;
+        } else {
+            int data_length = (strlen($7) + 1) / 3;
+            if (data_length < (255 - $5)) {
+                sprintf((char *)($$.args + $$.args_len), "%s", $7);
+                $$.args_len += strlen($7) + 1;
+            }
+            else {
+                invalidateCommand(&$$, ERROR_PEK_WRITE_DATA_TOO_LONG);
+            }
         }
     } |
-    PEK_CMD IIC WRITE NUMBER NUMBER CHAR_TYPE STR {
+    PEK_CMD IIC WRITE NUMBER NUMBER CHAR STR {
         $$.command_code = COMMAND_PEK_IIC_WRITE;
-        $$.args_len = 2;
+        $$.args_len = 3;
         $$.args[0] = $4;
         $$.args[1] = $5;
-
+        $$.args[2] = WRITE_DATA_TYPE_CHAR;
         if ($4 > 3) {
             invalidateCommand(&$$, ERROR_INVALID_PEK_IIC_WRITE_PAGE);
-        }
-        else {
-            sprintf($$.args + $$.args_len, "%s", "char");
-            $$.args_len += 5;
-            sprintf($$.args + $$.args_len, "%s", $7);
-            $$.args_len += strlen($7) + 1;
+        } else {
+            int data_length = strlen($7);
+            puts($7);
+            printf("%d", 255);
+            printf(" - $5");
+            printf(" = %d", 255 - $5);
+            printf(", %d < 255 - %d is %s\n\n", data_length, $5, data_length < (255 - $5) ? "true" : "false");
+            if (data_length < (255 - $5)) {
+                sprintf((char *)($$.args + $$.args_len), "%s", $7);
+                $$.args_len += strlen($7) + 1;
+            }
+            else {
+                invalidateCommand(&$$, ERROR_PEK_WRITE_DATA_TOO_LONG);
+            }
         }
     } |
     PEK_CMD IIC READ NUMBER NUMBER NUMBER {
@@ -547,10 +561,11 @@ void invalidateCommand(command *val, unsigned char error_code) {
     (*val).args[0] = error_code;
 }
 
-int yyerror(command* val, char const * msg) {
-    (*val).command_code = -1;
-    (*val).args_len = 1;
+int yyerror(command *val, char const *msg) {
+    (*val).command_code = COMMAND_INVALID;
+    (*val).args_len = 1 + strlen(msg);
     (*val).args[0] = ERROR_OTHER;
+    strncpy((char *)(*val).args + 1, msg, strlen(msg));
     return -1;
 }
 

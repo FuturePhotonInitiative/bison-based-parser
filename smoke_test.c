@@ -10,12 +10,15 @@
 int fail_assertion_count = 0;
 
 // @return true if the test did not have the same outcome as the assertion
-bool test_int_args(char *cmd_str, unsigned char expected_cmd_code, unsigned char *args, unsigned char len_args, FILE *fp, bool assert_success) {
+void test_int_args(char *cmd_str, unsigned char expected_cmd_code, unsigned char *args, unsigned char len_args, FILE *fp, bool assert_success) {
     fprintf(fp, "command: %s\n", cmd_str);
+    fflush(fp);
     command ret_val = parseCommand(cmd_str);
+    fprintf(fp, "%s\n", "past this");
+    fflush(fp);
     bool failure = false;
     if (ret_val.command_code != expected_cmd_code) {
-        fprintf(fp, "--command codes dont match--%s\n", ret_val.command_code == COMMAND_INVALID ? " the command is invalid" : "");
+        fprintf(fp, "--command codes dont match--%s\n", ret_val.command_code == COMMAND_INVALID ? (char *)(ret_val.args + 1) : "");
         fprintf(fp, "  parsed code: %d\nexpected code: %d\n", ret_val.command_code, expected_cmd_code);
         failure = true;
     } else {
@@ -70,25 +73,22 @@ bool test_int_args(char *cmd_str, unsigned char expected_cmd_code, unsigned char
     fflush(fp);
 }
 
-void test_pek_iic_write(char *cmd_str, unsigned char ar0, unsigned char ar1, char *ar2, char *ar3, FILE *fp, bool assert_success) {
+void test_pek_iic_write(char *cmd_str, unsigned char *args, char *string, FILE *fp, bool assert_success) {
     fprintf(fp, "command: %s\n", cmd_str);
     command ret_val = parseCommand(cmd_str);
     bool failure = false;
     if (ret_val.command_code != COMMAND_PEK_IIC_WRITE) {
-        fprintf(fp, "--command codes dont match--%s\n", ret_val.command_code == COMMAND_INVALID ? " the command is invalid" : "");
+        fprintf(fp, "--command codes dont match--%s\n", 
+                (ret_val.command_code == COMMAND_INVALID && ret_val.args[0] == ERROR_OTHER) ? (char *)(ret_val.args + 1) : "");
         fprintf(fp, "  parsed code: %d\nexpected code: %d\n", ret_val.command_code, COMMAND_PEK_IIC_WRITE);
         failure = true;
     } else {
         fprintf(fp, "command codes match\n");
-        unsigned char ret_ar0 = ret_val.args[0];
-        unsigned char ret_ar1 = ret_val.args[1];
-        char *ret_ar2 = ret_val.args + 2;
-        char *ret_ar3 = ret_ar2 + strlen(ret_ar2) + 1;
-        if (ar0 != ret_ar0 || ar1 != ret_ar1 || strncmp(ar2, ret_ar2, strlen(ar2)) != 0 || strncmp(ar3, ret_ar3, strlen(ar3) != 0)) {
+        if (args[0] != ret_val.args[0] || args[1] != ret_val.args[1] || args[2] != ret_val.args[2] || strncmp(string, (const char *)&ret_val.args[3], strlen(string)) != 0) {
             fprintf(fp, "--args do not match--\n");
             failure = true;
-            fprintf(fp, "  parsed args {%d %d %s %s}\n", ret_ar0, ret_ar1, ret_ar2, ret_ar3);
-            fprintf(fp, "expected args {%d %d %s %s}\n", ar0, ar1, ar2, ar3);
+            fprintf(fp, "  parsed args {%d %d %d %s}\n", ret_val.args[0], ret_val.args[1], ret_val.args[2], &ret_val.args[3]);
+            fprintf(fp, "expected args {%d %d %d %s}\n", args[0], args[1], args[2], string);
         }
     }
 
@@ -131,7 +131,6 @@ void test_pek_gpio_sct(
 void test_all_pek_gpio_set_clear_toggle(char *sct, FILE *fp) {
     char base_command_str[20];
     sprintf(base_command_str, "pek gpio %s", sct);
-    unsigned char args2[2];
     unsigned char command;
     switch(sct[0]) {
         case 's':
@@ -549,33 +548,123 @@ int main() {
 
 
     /****** pek iic write ******/
-    // normal usages, min, max
-    unsigned char ar0 = 0;
-    unsigned char ar1 = 0;
-    char *ar2 = "hex";
-    char *ar3 = "\"0\"";
     char curr_str[80];
-    sprintf(curr_str, "pek iic write %d %d %s %s", ar0, ar1, ar2, ar3);
-    test_pek_iic_write(curr_str, ar0, ar1, ar2, ar3, fp, true);
-    ar0 = 3;
-    ar1 = 255;
-    ar2 = "hex";
-    ar3 = "\'0xFF835D\'";
-    sprintf(curr_str, "pek iic write %d %d %s %s", ar0, ar1, ar2, ar3);
-    test_pek_iic_write(curr_str, ar0, ar1, ar2, ar3, fp, true);
-    ar0 = 3;
-    ar1 = 255;
-    ar2 = "char";
-    ar3 = "\"hello, how are you\"";
-    sprintf(curr_str, "pek iic write %d %d %s %s", ar0, ar1, ar2, ar3);
-    test_pek_iic_write(curr_str, ar0, ar1, ar2, ar3, fp, true);
-    // 3 is the max for the first argument
-    ar0 = 4;
-    ar1 = 255;
-    ar2 = "hex";
-    ar3 = "\"0\"";
-    sprintf(curr_str, "pek iic write %d %d %s %s", ar0, ar1, ar2, ar3);
-    test_pek_iic_write(curr_str, ar0, ar1, ar2, ar3, fp, false);
+    char *str = malloc(50);
+    // normal usages, min, max for hex
+    strncpy(str, "00", 3);
+    args3[0] = 0;
+    args3[1] = 0;
+    args3[2] = WRITE_DATA_TYPE_HEX;
+    sprintf(curr_str, "pek iic write %d %d hex \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, true);
+
+    strncpy(str, "00", 3);
+    args3[0] = 3;
+    args3[1] = 253;
+    args3[2] = WRITE_DATA_TYPE_HEX;
+    sprintf(curr_str, "pek iic write %d %d hex \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, true);
+
+    strncpy(str, "00 6a 7C", 9);
+    args3[0] = 1;
+    args3[1] = 201;
+    args3[2] = WRITE_DATA_TYPE_HEX;
+    sprintf(curr_str, "pek iic write %d %d hex \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, true);
+
+    // page cannot be greater than 3
+    strncpy(str, "00", 3);
+    args3[0] = 4;
+    args3[1] = 0;
+    args3[2] = WRITE_DATA_TYPE_HEX;
+    sprintf(curr_str, "pek iic write %d %d hex \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, false);
+
+    // len !< (255 - start)
+    strncpy(str, "00", 3);
+    args3[0] = 0;
+    args3[1] = 254;
+    args3[2] = WRITE_DATA_TYPE_HEX;
+    sprintf(curr_str, "pek iic write %d %d hex \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, false);
+
+    // len !< (255 - start)
+    strncpy(str, "00 6a 7C", 9);
+    args3[0] = 0;
+    args3[1] = 254;
+    args3[2] = WRITE_DATA_TYPE_HEX;
+    sprintf(curr_str, "pek iic write %d %d hex \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, false);
+
+    // invalid hex
+    strncpy(str, "00 6a 7C 8G", 12);
+    args3[0] = 0;
+    args3[1] = 254;
+    args3[2] = WRITE_DATA_TYPE_HEX;
+    sprintf(curr_str, "pek iic write %d %d hex \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, false);
+
+    // invalid hex
+    strncpy(str, "00 6a 7C 8D ", 13);
+    args3[0] = 0;
+    args3[1] = 254;
+    args3[2] = WRITE_DATA_TYPE_HEX;
+    sprintf(curr_str, "pek iic write %d %d hex \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, false);
+
+    // invalid hex
+    strncpy(str, "006a7C8D", 9);
+    args3[0] = 0;
+    args3[1] = 254;
+    args3[2] = WRITE_DATA_TYPE_HEX;
+    sprintf(curr_str, "pek iic write %d %d hex \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, false);
+
+    // normal usages, min, max for char
+    strncpy(str, "h", 2);
+    args3[0] = 0;
+    args3[1] = 0;
+    args3[2] = WRITE_DATA_TYPE_CHAR;
+    sprintf(curr_str, "pek iic write %d %d char \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, true);
+
+    strncpy(str, "h", 2);
+    args3[0] = 3;
+    args3[1] = 253;
+    args3[2] = WRITE_DATA_TYPE_CHAR;
+    sprintf(curr_str, "pek iic write %d %d char \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, true);
+
+    strncpy(str, "Hello, World!", 14);
+    args3[0] = 2;
+    args3[1] = 201;
+    args3[2] = WRITE_DATA_TYPE_CHAR;
+    sprintf(curr_str, "pek iic write %d %d char \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, true);
+
+    // page cannot be greater than 3
+    strncpy(str, "h", 2);
+    args3[0] = 4;
+    args3[1] = 0;
+    args3[2] = WRITE_DATA_TYPE_CHAR;
+    sprintf(curr_str, "pek iic write %d %d char \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, false);
+
+    // len !< (255 - start)
+    strncpy(str, "h", 2);
+    args3[0] = 0;
+    args3[1] = 254;
+    args3[2] = WRITE_DATA_TYPE_CHAR;
+    sprintf(curr_str, "pek iic write %d %d char \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, false);
+
+    // len !< (255 - start)
+    strncpy(str, "hel", 4);
+    args3[0] = 0;
+    args3[1] = 254;
+    args3[2] = WRITE_DATA_TYPE_CHAR;
+    sprintf(curr_str, "pek iic write %d %d char \"%s\"", args3[0], args3[1], str);
+    test_pek_iic_write(curr_str, args3, str, fp, false);
 
 
     //****** pek iic read ******//
@@ -639,6 +728,9 @@ int main() {
     // should not take any arguments
     args1[0] = 0;
     test_int_args("pek iic debug 0", COMMAND_PEK_IIC_DEBUG, args1, sizeof(args1), fp, false);
+
+
+    test_int_args("pek debug", COMMAND_PEK_GPIO_DEBUG, 0, 0, fp, false);
 
 
     fprintf(fp, "\n---Failed assertion count: %d---\n", fail_assertion_count);
