@@ -1,5 +1,7 @@
 %option noyywrap 
 %option nomain
+%option nounput
+%option noinput
 %{
 #include "parse_types.h"
 #include "parser.h"
@@ -20,6 +22,14 @@
 
 %%
 
+cfp     { return CFP_CMD; }
+
+qsfp	{ return QSFP_CMD; }
+
+pek	    { return PEK_CMD; }
+
+vcu108  { return VCU108_CMD; }
+
 all	    { return ALL_PORT; }
 
 bert    { return BERT; }
@@ -34,21 +44,7 @@ gpio	{ return GPIO; }
 
 iic		{ return IIC; }
 
-int	    { yylval.command_code = GPIO_PORT_INT; return GPIO_PORT; }
-
-lpmode	{ yylval.command_code = GPIO_PORT_LPMODE; return GPIO_PORT; }
-
-modprs	{ yylval.command_code = GPIO_PORT_MODPRS; return GPIO_PORT; }
-
-modsel	{ yylval.command_code = GPIO_PORT_MODSEL; return GPIO_PORT; }
-
-pek	    { return PEK_CMD; }
-
-qsfp	{ return QSFP_CMD; }
-
 read	{ return READ; }
-
-reset	{ yylval.command_code = GPIO_PORT_RESET; return GPIO_PORT; }
 
 set	    { return SET; }
 
@@ -56,13 +52,23 @@ toggle	{ return TOGGLE; }
 
 write	{ return WRITE; }
 
-cfp     { return CFP_CMD; }
+char    { return CHAR; }
 
-vcu108  { return VCU108_CMD; }
+hex     { return HEX; }
 
-leds    { yylval.command_code = VCU108_PORT_LEDS; return VCU108_PORT; }
+int	        { yylval.command_code = GPIO_PORT_INT; return GPIO_PORT; }
 
-buttons { yylval.command_code = VCU108_PORT_BUTTONS; return VCU108_PORT; }
+lpmode	    { yylval.command_code = GPIO_PORT_LPMODE; return GPIO_PORT; }
+
+modprs	    { yylval.command_code = GPIO_PORT_MODPRS; return GPIO_PORT; }
+
+modsel	    { yylval.command_code = GPIO_PORT_MODSEL; return GPIO_PORT; }
+
+reset	    { yylval.command_code = GPIO_PORT_RESET; return GPIO_PORT; }
+
+leds        { yylval.command_code = VCU108_PORT_LEDS; return VCU108_PORT; }
+
+buttons     { yylval.command_code = VCU108_PORT_BUTTONS; return VCU108_PORT; }
 
 switches    { yylval.command_code = VCU108_PORT_SWITCHES; return VCU108_PORT; }
 
@@ -72,15 +78,11 @@ prg_cntl2   { yylval.command_code = CFP_PORT_PRG_CNTL2; return CFP_PORT; }
 
 prg_cntl3   { yylval.command_code = CFP_PORT_PRG_CNTL3; return CFP_PORT; }
 
-tx_dis  { yylval.command_code = CFP_PORT_TX_DIS; return CFP_PORT; }
+tx_dis      { yylval.command_code = CFP_PORT_TX_DIS; return CFP_PORT; }
 
 mod_lopwr   { yylval.command_code = CFP_PORT_MOD_LOPWR; return CFP_PORT; }
 
 mod_rstn    { yylval.command_code = CFP_PORT_MOD_RSTN; return CFP_PORT; }
-
-char    { return CHAR; }
-
-hex     { return HEX; }
 
 [0-9]+ { 
     long parsed_num = strtol(yytext, NULL, 10);
@@ -104,7 +106,11 @@ hex     { return HEX; }
 
 [ \r\t] ;/*Ignore whitespace*/
 
-[^ \t\n]* { strncpy(yylval.str, yytext, MAX_ARGS); yylval.str[MAX_ARGS-1] = '\0'; return STR; }
+[^ \t\n]* {
+    strncpy(yylval.str, yytext, MAX_ARGS);
+    yylval.str[MAX_ARGS-1] = '\0';
+    return STR;
+}
 
 \n {return 0; /*EOF*/}
 

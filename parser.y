@@ -174,16 +174,17 @@ qsfp_command:
         $$.args_len = 0;
     } |
     QSFP_CMD IIC READ NUMBER NUMBER NUMBER {
-        $$.command_code = COMMAND_QSFP_IIC_READ;
-        $$.args_len = 3;
-        $$.args[0] = $4;
-        $$.args[1] = $5;
-        $$.args[2] = $6;
         if ($4 > 3) {
             invalidateCommand(&$$, ERROR_INVALID_QSFP_IIC_READ_PAGE);
         }
         else if ($5 >= $6) {
             invalidateCommand(&$$, ERROR_START_ADDR_NOT_LESS_THAN_END);
+        } else {
+            $$.command_code = COMMAND_QSFP_IIC_READ;
+            $$.args_len = 3;
+            $$.args[0] = $4;
+            $$.args[1] = $5;
+            $$.args[2] = $6;
         }
     } |
     QSFP_CMD IIC DEBUG {
@@ -198,28 +199,34 @@ qsfp_command:
 
 vcu108_command:
     VCU108_CMD GPIO READ VCU108_PORT NUMBER {
-        $$.command_code = COMMAND_VCU108_GPIO_READ;
-        $$.args_len = 2;
-        $$.args[0] = $4;
-        $$.args[1] = $5;
+        int failure = 0;
         switch ($4) {
             case VCU108_PORT_LEDS:
                 if ($5 > 7) {
                     invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
+                    failure = 1;
                 }
                 break;
             case VCU108_PORT_BUTTONS:
                 if ($5 > 4) {
                     invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
+                    failure = 1;
                 }
                 break;
             case VCU108_PORT_SWITCHES:
                 if ($5 > 3) {
                     invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
+                    failure = 1;
                 }
                 break;
             default:
                 break;
+        }
+        if (!failure) {
+            $$.command_code = COMMAND_VCU108_GPIO_READ;
+            $$.args_len = 2;
+            $$.args[0] = $4;
+            $$.args[1] = $5;
         }
     } |
     VCU108_CMD GPIO READ ALL_PORT {
@@ -228,27 +235,30 @@ vcu108_command:
         $$.args[0] = VCU108_PORT_ALL;
     } |
     VCU108_CMD GPIO SET NUMBER {
-        $$.command_code = COMMAND_VCU108_GPIO_SET;
-        $$.args_len = 1;
-        $$.args[0] = $4;
         if ($4 > 7) {
             invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
+        } else {
+            $$.command_code = COMMAND_VCU108_GPIO_SET;
+            $$.args_len = 1;
+            $$.args[0] = $4;
         }
     } |
     VCU108_CMD GPIO CLEAR NUMBER {
-        $$.command_code = COMMAND_VCU108_GPIO_CLEAR;
-        $$.args_len = 1;
-        $$.args[0] = $4;
         if ($4 > 7) {
             invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
+        } else {
+            $$.command_code = COMMAND_VCU108_GPIO_CLEAR;
+            $$.args_len = 1;
+            $$.args[0] = $4;
         }
     } |
     VCU108_CMD GPIO TOGGLE NUMBER {
-        $$.command_code = COMMAND_VCU108_GPIO_TOGGLE;
-        $$.args_len = 1;
-        $$.args[0] = $4;
         if ($4 > 7) {
             invalidateCommand(&$$, ERROR_INVALID_GPIO_PIN);
+        } else {
+            $$.command_code = COMMAND_VCU108_GPIO_TOGGLE;
+            $$.args_len = 1;
+            $$.args[0] = $4;
         }
     } |
     VCU108_CMD GPIO DEBUG {
@@ -259,16 +269,17 @@ vcu108_command:
 
 pek_command: 
     PEK_CMD IIC WRITE NUMBER NUMBER HEX HEX_STR {
-        $$.command_code = COMMAND_PEK_IIC_WRITE;
-        $$.args_len = 3;
-        $$.args[0] = $4;
-        $$.args[1] = $5;
-        $$.args[2] = WRITE_DATA_TYPE_HEX;
         if ($4 > 3) {
             invalidateCommand(&$$, ERROR_INVALID_PEK_IIC_WRITE_PAGE);
         } else {
             int data_length = (strlen($7) + 1) / 3;
             if (data_length < (255 - $5)) {
+                $$.command_code = COMMAND_PEK_IIC_WRITE;
+                $$.args_len = 3;
+                $$.args[0] = $4;
+                $$.args[1] = $5;
+                $$.args[2] = WRITE_DATA_TYPE_HEX;
+
                 sprintf((char *)($$.args + $$.args_len), "%s", $7);
                 $$.args_len += strlen($7) + 1;
             }
@@ -278,21 +289,17 @@ pek_command:
         }
     } |
     PEK_CMD IIC WRITE NUMBER NUMBER CHAR STR {
-        $$.command_code = COMMAND_PEK_IIC_WRITE;
-        $$.args_len = 3;
-        $$.args[0] = $4;
-        $$.args[1] = $5;
-        $$.args[2] = WRITE_DATA_TYPE_CHAR;
         if ($4 > 3) {
             invalidateCommand(&$$, ERROR_INVALID_PEK_IIC_WRITE_PAGE);
         } else {
             int data_length = strlen($7);
-            puts($7);
-            printf("%d", 255);
-            printf(" - $5");
-            printf(" = %d", 255 - $5);
-            printf(", %d < 255 - %d is %s\n\n", data_length, $5, data_length < (255 - $5) ? "true" : "false");
             if (data_length < (255 - $5)) {
+                $$.command_code = COMMAND_PEK_IIC_WRITE;
+                $$.args_len = 3;
+                $$.args[0] = $4;
+                $$.args[1] = $5;
+                $$.args[2] = WRITE_DATA_TYPE_CHAR;
+
                 sprintf((char *)($$.args + $$.args_len), "%s", $7);
                 $$.args_len += strlen($7) + 1;
             }
@@ -302,19 +309,19 @@ pek_command:
         }
     } |
     PEK_CMD IIC READ NUMBER NUMBER NUMBER {
-        $$.command_code = COMMAND_PEK_IIC_READ;
-        $$.args_len = 3;
-        $$.args[0] = $4;
-        $$.args[1] = $5;
-        $$.args[2] = $6;
         if ($4 > 3) {
             invalidateCommand(&$$, ERROR_INVALID_PEK_IIC_READ_PAGE);
         } else if ($5 >= $6) {
             invalidateCommand(&$$, ERROR_START_ADDR_NOT_LESS_THAN_END);
+        } else {
+            $$.command_code = COMMAND_PEK_IIC_READ;
+            $$.args_len = 3;
+            $$.args[0] = $4;
+            $$.args[1] = $5;
+            $$.args[2] = $6;
         }
     } |
     PEK_CMD GPIO READ NUMBER NUMBER {
-        $$.command_code = COMMAND_PEK_GPIO_READ;
         unsigned char success = 0;
         switch ($4) {
             case 1:
@@ -376,6 +383,7 @@ pek_command:
                 invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PORT);
         }
         if (success) {
+            $$.command_code = COMMAND_PEK_GPIO_READ;
             $$.args_len = 2;
             $$.args[0] = $4;
             $$.args[1] = $5;
@@ -384,7 +392,6 @@ pek_command:
         }
     } |
     PEK_CMD GPIO SET NUMBER NUMBER {
-        $$.command_code = COMMAND_PEK_GPIO_SET;
         unsigned char success = 0;
         switch ($4) {
             case 1:
@@ -427,6 +434,7 @@ pek_command:
                 invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PORT);
         }
         if (success) {
+            $$.command_code = COMMAND_PEK_GPIO_SET;
             $$.args_len = 2;
             $$.args[0] = $4;
             $$.args[1] = $5;
@@ -435,7 +443,6 @@ pek_command:
         }
     } |
     PEK_CMD GPIO CLEAR NUMBER NUMBER {
-        $$.command_code = COMMAND_PEK_GPIO_CLEAR;
         unsigned char success = 0;
         switch ($4) {
             case 1:
@@ -478,6 +485,7 @@ pek_command:
                 invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PORT);
         }
         if (success) {
+            $$.command_code = COMMAND_PEK_GPIO_CLEAR;
             $$.args_len = 2;
             $$.args[0] = $4;
             $$.args[1] = $5;
@@ -486,7 +494,6 @@ pek_command:
         }
     } |
     PEK_CMD GPIO TOGGLE NUMBER NUMBER {
-        $$.command_code = COMMAND_PEK_GPIO_TOGGLE;
         unsigned char success = 0;
         switch ($4) {
             case 1:
@@ -529,6 +536,7 @@ pek_command:
                 invalidateCommand(&$$, ERROR_INVALID_PEK_GPIO_PORT);
         }
         if (success) {
+            $$.command_code = COMMAND_PEK_GPIO_TOGGLE;
             $$.args_len = 2;
             $$.args[0] = $4;
             $$.args[1] = $5;
@@ -556,16 +564,16 @@ pek_command:
 %%
 
 void invalidateCommand(command *val, unsigned char error_code) {
-    (*val).command_code = COMMAND_INVALID;
-    (*val).args_len = 1;
-    (*val).args[0] = error_code;
+    val->command_code = COMMAND_INVALID;
+    val->args_len = 1;
+    val->args[0] = error_code;
 }
 
 int yyerror(command *val, char const *msg) {
-    (*val).command_code = COMMAND_INVALID;
-    (*val).args_len = 1 + strlen(msg);
-    (*val).args[0] = ERROR_OTHER;
-    strncpy((char *)(*val).args + 1, msg, strlen(msg));
+    val->command_code = COMMAND_INVALID;
+    val->args_len = 1 + strlen(msg);
+    val->args[0] = ERROR_OTHER;
+    strncpy((char *)val->args + 1, msg, strlen(msg));
     return -1;
 }
 

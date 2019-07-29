@@ -9,13 +9,9 @@
 // how many tests failed to match the assertion
 int fail_assertion_count = 0;
 
-// @return true if the test did not have the same outcome as the assertion
 void test_int_args(char *cmd_str, unsigned char expected_cmd_code, unsigned char *args, unsigned char len_args, FILE *fp, bool assert_success) {
     fprintf(fp, "command: %s\n", cmd_str);
-    fflush(fp);
     command ret_val = parseCommand(cmd_str);
-    fprintf(fp, "%s\n", "past this");
-    fflush(fp);
     bool failure = false;
     if (ret_val.command_code != expected_cmd_code) {
         fprintf(fp, "--command codes dont match--%s\n", ret_val.command_code == COMMAND_INVALID ? (char *)(ret_val.args + 1) : "");
