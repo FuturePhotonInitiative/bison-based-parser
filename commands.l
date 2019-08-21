@@ -42,6 +42,8 @@ eyescan	{ return EYESCAN; }
 
 gpio	{ return GPIO; }
 
+mdio    { return MDIO; }
+
 iic		{ return IIC; }
 
 read	{ return READ; }
@@ -104,13 +106,20 @@ mod_rstn    { yylval.command_code = CFP_PORT_MOD_RSTN; return CFP_PORT; }
     return STR;
 }
 
-[ \r\t] ;/*Ignore whitespace*/
+0x[0-9a-fA-F]{4} {
+    strncpy(yylval.str, yytext, 6);
+    return TWO_BYTES;
+}
 
+[ \r\t] ;/*Ignore whitespace
+
+this rule is not really useful. Also, it may be error prone.
 [^ \t\n]* {
     strncpy(yylval.str, yytext, MAX_ARGS);
     yylval.str[MAX_ARGS-1] = '\0';
     return STR;
 }
+*/
 
 \n {return 0; /*EOF*/}
 

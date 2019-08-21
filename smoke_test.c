@@ -9,6 +9,42 @@
 // how many tests failed to match the assertion
 int fail_assertion_count = 0;
 
+/**
+ * Prints if the command was valid or not. If the command was parsed to a validity not expected
+ * then print the error code, the inputted command, and it it either failed instead of succeeded or succeeded instead of failed.
+ * 
+ * @param ret_val the command structure that was returned from parsing
+ * @param failed if the command failed to be parsed or not
+ * @param should_succeed if the command should have succeeded or not
+ * @param cmd_str the command string that was input
+ * @param fp the file pointer to log debug messages to
+ */
+void print_and_record_result(command ret_val, bool failed, bool should_succeed, char *cmd_str, FILE *fp) {
+    fprintf(fp, "%s\n\n", failed ? "FAILURE" : "SUCCESS");
+    if (failed == should_succeed) {
+        fail_assertion_count += 1;
+        fprintf(fp, "Error code: %d\n", ret_val.args[0]);
+        fprintf(fp, "assertion failed\n");
+        char message1[] = "FAILED instead of SUCCEEDED";
+        char message2[] = "SUCCEEDED instead of FAILED";
+        fprintf(fp, "%s %s\n\n", cmd_str, failed ? message1 : message2);
+    }
+}
+
+/**
+ * Tests a command that has all its arguments as unsigned characters. This will: 
+ * - run the command string through the parser,
+ * - test if the struct's command code matches. If it does not, print the expected and actual command code.
+ * - If it does, check the arguments for validity and the correct length. In any case, print what the actual and expected values are.
+ * - record if the test did not meet expectations
+ * 
+ * @param cmd_str the command string to run through the parser
+ * @param expected_cmd_code the command code the command should parse to
+ * @param args an array that the command struct's arguments should be
+ * @param len_args the length in bytes that the argument array should be
+ * @param fp the file pointer to log debug messages to
+ * @param assert_success if the parsing should succeed or not
+ */
 void test_int_args(char *cmd_str, unsigned char expected_cmd_code, unsigned char *args, unsigned char len_args, FILE *fp, bool assert_success) {
     fprintf(fp, "command: %s\n", cmd_str);
     command ret_val = parseCommand(cmd_str);
@@ -57,18 +93,20 @@ void test_int_args(char *cmd_str, unsigned char expected_cmd_code, unsigned char
         fprintf(fp, "}\n");
     }
 
-    fprintf(fp, "%s\n\n", failure ? "FAILURE" : "SUCCESS");
-    if (failure == assert_success) {
-        fail_assertion_count += 1;
-        fprintf(fp, "Error code: %d\n", ret_val.args[0]);
-        fprintf(fp, "assertion failed\n");
-        char message1[] = "FAILED instead of SUCCEEDED";
-        char message2[] = "SUCCEEDED instead of FAILED";
-        fprintf(fp, "%s %s\n\n", cmd_str, failure ? message1 : message2);
-    }
+    print_and_record_result(ret_val, failure, assert_success, cmd_str, fp);
     fflush(fp);
 }
 
+/**
+ * Tests a pek iic write command for its validity. One of these commands is a string, so test_int_args will not work.
+ * It does everything that test_int_args does except it pays special attention to the string argument.
+ * 
+ * @param cmd_str the command string to run through the parser
+ * @param args an array that the command struct's args should be less the string on the end
+ * @param string the string that the command struct's string argument should be exactly
+ * @param fp the file pointer to log debug messages to
+ * @param assert_success if the parsing should succeed or not
+ */ 
 void test_pek_iic_write(char *cmd_str, unsigned char *args, char *string, FILE *fp, bool assert_success) {
     fprintf(fp, "command: %s\n", cmd_str);
     command ret_val = parseCommand(cmd_str);
@@ -82,24 +120,57 @@ void test_pek_iic_write(char *cmd_str, unsigned char *args, char *string, FILE *
         fprintf(fp, "command codes match\n");
         if (args[0] != ret_val.args[0] || args[1] != ret_val.args[1] || args[2] != ret_val.args[2] || strncmp(string, (const char *)&ret_val.args[3], strlen(string)) != 0) {
             fprintf(fp, "--args do not match--\n");
-            failure = true;
             fprintf(fp, "  parsed args {%d %d %d %s}\n", ret_val.args[0], ret_val.args[1], ret_val.args[2], &ret_val.args[3]);
             fprintf(fp, "expected args {%d %d %d %s}\n", args[0], args[1], args[2], string);
+            failure = true;
         }
     }
 
-    fprintf(fp, "%s\n\n", failure ? "FAILURE" : "SUCCESS");
-    if (failure == assert_success) {
-        fail_assertion_count += 1;
-        fprintf(fp, "Error code: %d\n", ret_val.args[0]);
-        fprintf(fp, "assertion failed\n");
-        char message1[] = "FAILED instead of SUCCEEDED";
-        char message2[] = "SUCCEEDED instead of FAILED";
-        fprintf(fp, "%s %s\n\n", cmd_str, failure ? message1 : message2);
-    }
+    print_and_record_result(ret_val, failure, assert_success, cmd_str, fp);
     fflush(fp);
 }
 
+/**
+ * Tests a cfp mdio write command for its validity. One of these commands is a string, so test_int_args will not work.
+ * It does everything that test_int_args does except it pays special attention to the string argument.
+ * 
+ * @param cmd_str the command string to run through the parser
+ * @param args an array that the command struct's args should be less the string on the end
+ * @param string the string that the command struct's string argument should be exactly
+ * @param fp the file pointer to log debug messages to
+ * @param assert_success if the parsing should succeed or not
+ */ 
+void test_mdio_write(char *cmd_str, unsigned char *args, char *string, FILE *fp, bool assert_success) {
+    fprintf(fp, "command: %s\n", cmd_str);
+    command ret_val = parseCommand(cmd_str);
+    bool failure = false;
+    if (ret_val.command_code != COMMAND_CFP_MDIO_WRITE) {
+        fprintf(fp, "--command codes dont match--%s\n", ret_val.command_code == COMMAND_INVALID ? (char *)(ret_val.args + 1) : "");
+        fprintf(fp, "  parsed code: %d\nexpected code: %d\n", ret_val.command_code, COMMAND_CFP_MDIO_WRITE);
+        failure = true;
+    }
+    else {
+        fprintf(fp, "command codes match\n");
+        if (args[0] != ret_val.args[0] || strncmp(string, (const char *)ret_val.args + 1, strlen(string) != 0)) {
+            fprintf(fp, "--args do not match--\n");
+            fprintf(fp, "  parsed args {%d %s}\n", ret_val.args[0], ret_val.args + 1);
+            fprintf(fp, "expected args {%d %s}\n", args[0], string);
+            failure = true;
+        }
+    }
+
+    print_and_record_result(ret_val, failure, assert_success, cmd_str, fp);
+    fflush(fp);
+}
+
+/**
+ * A helper function for running a pek gpio read test.
+ * 
+ * @param port the port argument that the input command string should contain
+ * @param pin the pin argument that theinput command string should contain
+ * @param fp the file pointer to log debug messages to
+ * @param success if the command should succeed or not
+ */ 
 void test_pek_gpio_read(unsigned char port, unsigned char pin, FILE *fp, bool success) {
     unsigned char args2[2];
     args2[0] = port;
@@ -109,21 +180,39 @@ void test_pek_gpio_read(unsigned char port, unsigned char pin, FILE *fp, bool su
     test_int_args(command_str, COMMAND_PEK_GPIO_READ, args2, sizeof(args2), fp, success);
 }
 
+/**
+ * A helper function for running a pek gpio (set, clear or toggle) test
+ * 
+ * @param base_command_str "pek gpio set", "pek gpio clear" or "pek gpio toggle"
+ * @param command_str an array that one can put a command string into
+ * @param port the port to put as an arg in the command string
+ * @param pin the pin to put as an arg in the command string
+ * @param command_code the command code to test
+ * @param fp the file pointer to log debug messages to
+ * @param success if the command should succeed or not
+ */ 
 void test_pek_gpio_sct(
         char *base_command_str, 
         char *command_str, 
         unsigned char port, 
         unsigned char pin,
-        unsigned char command, 
+        unsigned char command_code, 
         FILE *fp, 
         bool success) {
     unsigned char args2[2];
     args2[0] = port;
     args2[1] = pin;
     sprintf(command_str, "%s %d %d", base_command_str, port, pin);
-    test_int_args(command_str, command, args2, sizeof(args2), fp, success);
+    test_int_args(command_str, command_code, args2, sizeof(args2), fp, success);
 }
 
+/**
+ * This function tests all the pek gpio (set, clear, or toggle) commands. There are an easilly enumerable amount of cases that it
+ * should succeed or fail in, so this tests all of them
+ * 
+ * @param sct the string (either "set", "clear", or "toggle")
+ * @param fp the file pointer to log debug messages to
+ */ 
 void test_all_pek_gpio_set_clear_toggle(char *sct, FILE *fp) {
     char base_command_str[20];
     sprintf(base_command_str, "pek gpio %s", sct);
@@ -174,6 +263,10 @@ void test_all_pek_gpio_set_clear_toggle(char *sct, FILE *fp) {
     test_pek_gpio_sct(base_command_str, command_str, 6, 4, command, fp, false);
 }
 
+/**
+ * Runs all the test cases that we care to test for the frontend of the Bison parser.
+ * The status of every command tested is logged to the file (currently "new_commands.txt" in the same directory as the exe)
+ */ 
 int main() {
 
     FILE *fp = fopen("new_commands.txt", "w");
@@ -272,6 +365,71 @@ int main() {
     // should not take any arguments
     args1[0] = 0;
     test_int_args("cfp gpio debug 0", COMMAND_CFP_GPIO_DEBUG, args1, sizeof(args1), fp, false);
+
+
+    //****** cfp mdio read ******//
+    // normal usages
+    args1[0] = 0;
+    test_int_args("cfp mdio read 0", COMMAND_CFP_MDIO_READ, args1, sizeof(args1), fp, true);
+    args1[0] = 31;
+    test_int_args("cfp mdio read 31", COMMAND_CFP_MDIO_READ, args1, sizeof(args1), fp, true);
+    // to large number
+    args1[0] = 32;
+    test_int_args("cfp mdio read 32", COMMAND_CFP_MDIO_READ, args1, sizeof(args1), fp, false);
+    // must take an arg
+    test_int_args("cfp mdio read", COMMAND_CFP_MDIO_READ, args1, sizeof(args1), fp, false);
+    // must not take more than one arg
+    test_int_args("cfp mdio read 0 0", COMMAND_CFP_MDIO_READ, args1, sizeof(args1), fp, false);
+
+
+    //****** cfp mdio write ******//
+    char command_string[50];
+    char two_byte_number[7];
+    // normal usages
+    args1[0] = 0;
+    strncpy(two_byte_number, "0x0000", 6);
+    sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
+    test_mdio_write(command_string, args1, two_byte_number, fp, true);
+    args1[0] = 31;
+    strncpy(two_byte_number, "0x0000", 6);
+    sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
+    test_mdio_write(command_string, args1, two_byte_number, fp, true);
+    args1[0] = 0;
+    strncpy(two_byte_number, "0xFFFF", 6);
+    sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
+    test_mdio_write(command_string, args1, two_byte_number, fp, true);
+    args1[0] = 31;
+    strncpy(two_byte_number, "0xFFFF", 6);
+    sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
+    test_mdio_write(command_string, args1, two_byte_number, fp, true);
+    args1[0] = 23;
+    strncpy(two_byte_number, "0x8f9a", 6);
+    sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
+    test_mdio_write(command_string, args1, two_byte_number, fp, true);
+    // more than two bytes
+    args1[0] = 0;
+    char number_too_long[8];
+    strncpy(two_byte_number, "0xFFFF0", 7);
+    sprintf(command_string, "cfp mdio write %d %s", args1[0], number_too_long);
+    test_mdio_write(command_string, args1, number_too_long, fp, false);
+    // less than two bytes
+    args1[0] = 0;
+    strncpy(two_byte_number, "0xFFF", 6);
+    sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
+    test_mdio_write(command_string, args1, two_byte_number, fp, false);
+    // more than 32 is invalid
+    args1[0] = 32;
+    strncpy(two_byte_number, "0x8f9a", 6);
+    sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
+    test_mdio_write(command_string, args1, two_byte_number, fp, false);
+
+
+    //****** cfp mdio write ******//
+    // normal usages
+    test_int_args("cfp mdio debug", COMMAND_CFP_MDIO_DEBUG, 0, 0, fp, true);
+    // should not take any arguments
+    args1[0] = 0;
+    test_int_args("cfp mdio debug 0", COMMAND_CFP_MDIO_DEBUG, args1, sizeof(args1), fp, false);
 
 
     //****** qsfp gpio read ******//

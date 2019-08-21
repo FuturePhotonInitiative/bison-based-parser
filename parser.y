@@ -26,14 +26,15 @@ int yyerror(command*, char const *);
 %token CFP_CMD
 %token QSFP_CMD
 %token VCU108_CMD
-%token PEK_CMD  
+%token PEK_CMD
 %token ALL_PORT
-%token GPIO 
+%token GPIO
+%token MDIO
 %token <command_code> GPIO_PORT
-%token <command_code> VCU108_PORT 
+%token <command_code> VCU108_PORT
 %token <command_code> CFP_PORT
-%token <num> NUMBER 
-%token READ 
+%token <num> NUMBER
+%token READ
 %token WRITE
 %token DEBUG
 %token SET
@@ -41,6 +42,7 @@ int yyerror(command*, char const *);
 %token TOGGLE
 %token <str> STR
 %token <str> HEX_STR
+%token <str> TWO_BYTES
 %token BERT
 %token EYESCAN
 %token IIC
@@ -96,6 +98,29 @@ cfp_command:
     } |
     CFP_CMD GPIO DEBUG {
         $$.command_code = COMMAND_CFP_GPIO_DEBUG;
+        $$.args_len = 0;
+    } |
+    CFP_CMD MDIO READ NUMBER {
+        if ($4 > 31) {
+            invalidateCommand(&$$, ERROR_INVALID_CFP_MDIO_ADDRESS);
+        } else {
+            $$.command_code = COMMAND_CFP_MDIO_READ;
+            $$.args_len = 1;
+            $$.args[0] = $4;
+        }
+    } |
+    CFP_CMD MDIO WRITE NUMBER TWO_BYTES {
+        if ($4 > 31) {
+            invalidateCommand(&$$, ERROR_INVALID_CFP_MDIO_ADDRESS);
+        } else {
+            $$.command_code = COMMAND_CFP_MDIO_WRITE;
+            $$.args_len = 1 + strlen($5);
+            $$.args[0] = $4;
+            strncpy((char *)$$.args + 1, $5, strlen($5));
+        }
+    } |
+    CFP_CMD MDIO DEBUG {
+        $$.command_code = COMMAND_CFP_MDIO_DEBUG;
         $$.args_len = 0;
     };
 
@@ -563,12 +588,27 @@ pek_command:
 
 %%
 
+/**
+ * A helper function for invalidating a command.
+ * 
+ * @param val the command struct to populate
+ * @param error_code the error code to populate the struct with so the user knows why the command failed
+*/
 void invalidateCommand(command *val, unsigned char error_code) {
     val->command_code = COMMAND_INVALID;
     val->args_len = 1;
     val->args[0] = error_code;
 }
 
+/**
+ * I believe this function is for if there is no rule for the given set of tokens
+ * The structure of an error command struct will be the the command code as COMMAND_INVALID,
+ * the first argument being the error code defined in parser.h, and the other arguments
+ * being characters of the msg
+ * 
+ * @param val the command struct to populate
+ * @param msg the error message since we defined parse.error verbose
+*/
 int yyerror(command *val, char const *msg) {
     val->command_code = COMMAND_INVALID;
     val->args_len = 1 + strlen(msg);
