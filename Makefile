@@ -1,8 +1,8 @@
-# repl:repl.c y.tab_test.c lex.yy_test.c y.tab_test.h lex.yy_test.h
-# 	gcc -DLOCAL -Wall -Wextra -Wpedantic -o repl repl.c y.tab_test.c lex.yy_test.c
+repl:repl.c y.tab_test.c lex.yy_test.c y.tab_test.h lex.yy_test.h
+	gcc -DLOCAL -Wall -Wextra -Wpedantic -o repl repl.c y.tab_test.c lex.yy_test.c
 
-smoke_test:smoke_test.c y.tab_test.c lex.yy_test.c y.tab_test.h lex.yy_test.h
-	gcc -DLOCAL -Wall -Wextra -Wpedantic -o smoke_test smoke_test.c y.tab_test.c lex.yy_test.c
+# smoke_test:smoke_test.c y.tab_test.c lex.yy_test.c y.tab_test.h lex.yy_test.h
+# 	gcc -DLOCAL -Wall -Wextra -Wpedantic -o smoke_test smoke_test.c y.tab_test.c lex.yy_test.c
 
 y.tab_test.c: parser.y
 	bison --verbose --debug --defines=y.tab_test.h -o y.tab_test.c parser.y

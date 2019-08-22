@@ -614,6 +614,7 @@ int yyerror(command *val, char const *msg) {
     val->args_len = 1 + strlen(msg);
     val->args[0] = ERROR_OTHER;
     strncpy((char *)val->args + 1, msg, strlen(msg));
+    val->args[strlen(msg) + 1] = '\0';
     return -1;
 }
 
