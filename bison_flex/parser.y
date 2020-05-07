@@ -6,11 +6,11 @@
 #include <stdio.h>
 
 #ifdef LOCAL
-#include "lex.yy_test.h"
+#include "lexer_test.h"
 int yydebug = 1;
 #else
 #include <xil_printf.h>
-#include "lex.yy.h"
+#include "lexer.h"
 #endif
 
 void _setupLexInput(char*);
@@ -603,7 +603,9 @@ void invalidateCommand(command *val, unsigned char error_code) {
 /**
  * I believe this function is for if there is no rule for the given set of tokens
  * The structure of an error command struct will be the the command code as COMMAND_INVALID,
- * the first argument being the error code defined in parser.h, and the other arguments
+ * the first argument being the error code defined in parse_codes.h, and the
+ other
+ arguments
  * being characters of the msg
  * 
  * @param val the command struct to populate

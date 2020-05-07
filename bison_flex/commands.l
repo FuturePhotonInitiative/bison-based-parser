@@ -7,9 +7,9 @@
 #include "parser.h"
 
 #ifndef LOCAL
-#include "y.tab.h"
+#include "parser.h"
 #else
-#include "y.tab_test.h"
+#include "parser_test.h"
 #endif
 
 #include <stdlib.h>

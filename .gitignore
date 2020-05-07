@@ -2,3 +2,8 @@
 CMakeLists.txt
 .idea/*
 cmake-build-wsl_profile/*
+
+bison_flex/lexer.c
+bison_flex/lexer.h
+bison_flex/parser.c
+bison_flex/parser.h

@@ -1,6 +1,6 @@
 // Test file for a parser. Run main with no arguments.
 
-#include "parser.h"
+#include "bison_flex/parse_codes.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>

@@ -8,11 +8,11 @@
  *****************************************************************************/
 
 #include "command_caller.h"
-#include "vcu108.h"
-#include "qsfp_iic.h"
-#include "qsfp_gpio.h"
-#include "pek.h"
-#include "cfp_mdio.h"
+#include "command_caller/actions/vcu108.h"
+#include "command_caller/actions/qsfp_iic.h"
+#include "command_caller/actions/qsfp_gpio.h"
+#include "command_caller/actions/pek.h"
+#include "command_caller/actions/cfp_mdio.h"
 
 char *USE_PTCS = 
         "Please use PIC Test Control Software to complete this task\r\n";
