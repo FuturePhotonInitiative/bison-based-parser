@@ -1,1 +1,4 @@
 .vscode/*
+CMakeLists.txt
+.idea/*
+cmake-build-wsl_profile/*
