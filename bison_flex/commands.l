@@ -4,7 +4,7 @@
 %option noinput
 %{
 #include "parse_types.h"
-#include "parser.h"
+#include "parse_codes.h"
 
 #ifndef LOCAL
 #include "parser.h"

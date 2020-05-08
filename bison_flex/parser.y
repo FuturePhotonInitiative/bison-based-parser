@@ -1,6 +1,6 @@
 %{
 #include "parse_types.h"
-#include "parser.h"
+#include "parse_codes.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,7 +9,6 @@
 #include "lexer_test.h"
 int yydebug = 1;
 #else
-#include <xil_printf.h>
 #include "lexer.h"
 #endif
 
