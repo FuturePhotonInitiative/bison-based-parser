@@ -37,7 +37,7 @@ int main() {
 		char command[MAX_LEN_COMMAND];
 		command[MAX_LEN_COMMAND - 1] = '\0';
 
-		char read = '\0';
+		char read;
 		for (int i = 0; i < MAX_LEN_COMMAND - 1; i++) {
 		    read = inbyte();
             command[i] = read;
