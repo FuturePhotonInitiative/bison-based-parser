@@ -14,6 +14,7 @@ int yydebug = 1;
 
 void _setupLexInput(char*);
 void _cleanupLex();
+void check_CFP_set_clear_toggle(command *, unsigned char);
 void invalidateCommand(command *, unsigned char);
 int yyerror(command*, char const *);
 %}
@@ -80,21 +81,37 @@ cfp_command:
         $$.args_len = 1;
         $$.args[0] = CFP_PORT_ALL;
     } |
+
     CFP_CMD GPIO SET CFP_PORT {
         $$.command_code = COMMAND_CFP_GPIO_SET;
-        $$.args_len = 1;
-        $$.args[0] = $4;
+        check_CFP_set_clear_toggle(&$$, $4);
     } |
+    CFP_CMD GPIO SET ALL_PORT {
+        $$.command_code = COMMAND_CFP_GPIO_SET;
+        $$.args_len = 1;
+        $$.args[0] = CFP_PORT_ALL;
+    } |
+
     CFP_CMD GPIO CLEAR CFP_PORT {
         $$.command_code = COMMAND_CFP_GPIO_CLEAR;
-        $$.args_len = 1;
-        $$.args[0] = $4;
+        check_CFP_set_clear_toggle(&$$, $4);
     } |
+    CFP_CMD GPIO CLEAR ALL_PORT {
+        $$.command_code = COMMAND_CFP_GPIO_CLEAR;
+        $$.args_len = 1;
+        $$.args[0] = CFP_PORT_ALL;
+    } |
+
     CFP_CMD GPIO TOGGLE CFP_PORT {
         $$.command_code = COMMAND_CFP_GPIO_TOGGLE;
-        $$.args_len = 1;
-        $$.args[0] = $4;
+        check_CFP_set_clear_toggle(&$$, $4);
     } |
+    CFP_CMD GPIO TOGGLE ALL_PORT {
+        $$.command_code = COMMAND_CFP_GPIO_TOGGLE;
+        $$.args_len = 1;
+        $$.args[0] = CFP_PORT_ALL;
+    } |
+
     CFP_CMD GPIO DEBUG {
         $$.command_code = COMMAND_CFP_GPIO_DEBUG;
         $$.args_len = 0;
@@ -586,6 +603,21 @@ pek_command:
     };
 
 %%
+void check_CFP_set_clear_toggle(command *val, unsigned char port) {
+    switch (port) {
+        case CFP_PORT_PRG_CNTL1:
+        case CFP_PORT_PRG_CNTL2:
+        case CFP_PORT_PRG_CNTL3:
+        case CFP_PORT_TX_DIS:
+        case CFP_PORT_MOD_LOPWR:
+        case CFP_PORT_MOD_RSTN:
+            val->args_len = 1;
+            val->args[0] = port;
+            break;
+        default:
+            invalidateCommand(val, ERROR_INVALID_CFP_PORT);
+    }
+}
 
 /**
  * A helper function for invalidating a command.

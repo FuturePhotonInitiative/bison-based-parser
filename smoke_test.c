@@ -1,6 +1,7 @@
 // Test file for a parser. Run main with no arguments.
 
 #include "bison_flex/parse_codes.h"
+#include "bison_flex/parse_types.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -289,6 +290,16 @@ int main() {
     test_int_args("cfp gpio read mod_lopwr", COMMAND_CFP_GPIO_READ, args1, sizeof(args1), fp, true);
     args1[0] = CFP_PORT_MOD_RSTN;
     test_int_args("cfp gpio read mod_rstn", COMMAND_CFP_GPIO_READ, args1, sizeof(args1), fp, true);
+    args1[0] = CFP_PORT_PRG_ALRM1;
+    test_int_args("cfp gpio read prg_alrm1", COMMAND_CFP_GPIO_READ, args1,sizeof(args1), fp, true);
+    args1[0] = CFP_PORT_PRG_ALRM2;
+    test_int_args("cfp gpio read prg_alrm2", COMMAND_CFP_GPIO_READ, args1,sizeof(args1), fp, true);
+    args1[0] = CFP_PORT_PRG_ALRM3;
+    test_int_args("cfp gpio read prg_alrm3", COMMAND_CFP_GPIO_READ, args1,sizeof(args1), fp, true);
+    args1[0] = CFP_PORT_RX_LOS;
+    test_int_args("cfp gpio read rx_los", COMMAND_CFP_GPIO_READ, args1, sizeof(args1), fp, true);
+    args1[0] = CFP_PORT_MOD_ABS;
+    test_int_args("cfp gpio read mod_abs", COMMAND_CFP_GPIO_READ, args1, sizeof(args1), fp, true);
     args1[0] = CFP_PORT_ALL;
     test_int_args("cfp gpio read all", COMMAND_CFP_GPIO_READ, args1, sizeof(args1), fp, true);
     // misspelled command test
@@ -316,9 +327,20 @@ int main() {
     test_int_args("cfp gpio set mod_lopwr", COMMAND_CFP_GPIO_SET, args1, sizeof(args1), fp, true);
     args1[0] = CFP_PORT_MOD_RSTN;
     test_int_args("cfp gpio set mod_rstn", COMMAND_CFP_GPIO_SET, args1, sizeof(args1), fp, true);
-    // cannot set all
+    // the following are not allowed
+    args1[0] = CFP_PORT_PRG_ALRM1;
+    test_int_args("cfp gpio set prg_alrm1", COMMAND_CFP_GPIO_SET, args1,sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_PRG_ALRM2;
+    test_int_args("cfp gpio set prg_alrm2", COMMAND_CFP_GPIO_SET, args1,sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_PRG_ALRM3;
+    test_int_args("cfp gpio set prg_alrm3", COMMAND_CFP_GPIO_SET, args1,sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_RX_LOS;
+    test_int_args("cfp gpio set rx_los", COMMAND_CFP_GPIO_SET, args1, sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_MOD_ABS;
+    test_int_args("cfp gpio set mod_abs", COMMAND_CFP_GPIO_SET, args1, sizeof(args1), fp, false);
+    //
     args1[0] = CFP_PORT_ALL;
-    test_int_args("cfp gpio set all", COMMAND_CFP_GPIO_SET, args1, sizeof(args1), fp, false);
+    test_int_args("cfp gpio set all", COMMAND_CFP_GPIO_SET, args1, sizeof(args1), fp, true);
 
 
     //****** cfp gpio clear ******//
@@ -335,9 +357,20 @@ int main() {
     test_int_args("cfp gpio clear mod_lopwr", COMMAND_CFP_GPIO_CLEAR, args1, sizeof(args1), fp, true);
     args1[0] = CFP_PORT_MOD_RSTN;
     test_int_args("cfp gpio clear mod_rstn", COMMAND_CFP_GPIO_CLEAR, args1, sizeof(args1), fp, true);
-    // cannot clear all
+    // the following are not allowed
+    args1[0] = CFP_PORT_PRG_ALRM1;
+    test_int_args("cfp gpio clear prg_alrm1", COMMAND_CFP_GPIO_CLEAR, args1,sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_PRG_ALRM2;
+    test_int_args("cfp gpio clear prg_alrm2", COMMAND_CFP_GPIO_CLEAR, args1,sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_PRG_ALRM3;
+    test_int_args("cfp gpio clear prg_alrm3", COMMAND_CFP_GPIO_CLEAR, args1,sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_RX_LOS;
+    test_int_args("cfp gpio clear rx_los", COMMAND_CFP_GPIO_CLEAR, args1, sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_MOD_ABS;
+    test_int_args("cfp gpio clear mod_abs", COMMAND_CFP_GPIO_CLEAR, args1, sizeof(args1), fp, false);
+    //
     args1[0] = CFP_PORT_ALL;
-    test_int_args("cfp gpio clear all", COMMAND_CFP_GPIO_CLEAR, args1, sizeof(args1), fp, false);
+    test_int_args("cfp gpio clear all", COMMAND_CFP_GPIO_CLEAR, args1, sizeof(args1), fp, true);
 
 
     //****** cfp gpio toggle ******//
@@ -354,9 +387,20 @@ int main() {
     test_int_args("cfp gpio toggle mod_lopwr", COMMAND_CFP_GPIO_TOGGLE, args1, sizeof(args1), fp, true);
     args1[0] = CFP_PORT_MOD_RSTN;
     test_int_args("cfp gpio toggle mod_rstn", COMMAND_CFP_GPIO_TOGGLE, args1, sizeof(args1), fp, true);
-    // cannot toggle all
+    // the following are not allowed
+    args1[0] = CFP_PORT_PRG_ALRM1;
+    test_int_args("cfp gpio toggle prg_alrm1", COMMAND_CFP_GPIO_TOGGLE, args1,sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_PRG_ALRM2;
+    test_int_args("cfp gpio toggle prg_alrm2", COMMAND_CFP_GPIO_TOGGLE, args1,sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_PRG_ALRM3;
+    test_int_args("cfp gpio toggle prg_alrm3", COMMAND_CFP_GPIO_TOGGLE, args1,sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_RX_LOS;
+    test_int_args("cfp gpio toggle rx_los", COMMAND_CFP_GPIO_TOGGLE, args1, sizeof(args1), fp, false);
+    args1[0] = CFP_PORT_MOD_ABS;
+    test_int_args("cfp gpio toggle mod_abs", COMMAND_CFP_GPIO_TOGGLE, args1, sizeof(args1), fp, false);
+    //
     args1[0] = CFP_PORT_ALL;
-    test_int_args("cfp gpio toggle all", COMMAND_CFP_GPIO_TOGGLE, args1, sizeof(args1), fp, false);
+    test_int_args("cfp gpio toggle all", COMMAND_CFP_GPIO_TOGGLE, args1,sizeof(args1), fp, true);
 
 
     //****** cfp gpio debug ******//
@@ -387,39 +431,39 @@ int main() {
     char two_byte_number[7];
     // normal usages
     args1[0] = 0;
-    strncpy(two_byte_number, "0x0000", 6);
+    strncpy(two_byte_number, "0x0000", 7);
     sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
     test_mdio_write(command_string, args1, two_byte_number, fp, true);
     args1[0] = 31;
-    strncpy(two_byte_number, "0x0000", 6);
+    strncpy(two_byte_number, "0x0000", 7);
     sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
     test_mdio_write(command_string, args1, two_byte_number, fp, true);
     args1[0] = 0;
-    strncpy(two_byte_number, "0xFFFF", 6);
+    strncpy(two_byte_number, "0xFFFF", 7);
     sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
     test_mdio_write(command_string, args1, two_byte_number, fp, true);
     args1[0] = 31;
-    strncpy(two_byte_number, "0xFFFF", 6);
+    strncpy(two_byte_number, "0xFFFF", 7);
     sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
     test_mdio_write(command_string, args1, two_byte_number, fp, true);
     args1[0] = 23;
-    strncpy(two_byte_number, "0x8f9a", 6);
+    strncpy(two_byte_number, "0x8f9a", 7);
     sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
     test_mdio_write(command_string, args1, two_byte_number, fp, true);
     // more than two bytes
     args1[0] = 0;
     char number_too_long[8];
-    strncpy(two_byte_number, "0xFFFF0", 7);
+    strncpy(number_too_long, "0xFFFF0", 8);
     sprintf(command_string, "cfp mdio write %d %s", args1[0], number_too_long);
     test_mdio_write(command_string, args1, number_too_long, fp, false);
     // less than two bytes
     args1[0] = 0;
-    strncpy(two_byte_number, "0xFFF", 6);
+    strncpy(two_byte_number, "0xFFF", 7);
     sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
     test_mdio_write(command_string, args1, two_byte_number, fp, false);
     // more than 32 is invalid
     args1[0] = 32;
-    strncpy(two_byte_number, "0x8f9a", 6);
+    strncpy(two_byte_number, "0x8f9a", 7);
     sprintf(command_string, "cfp mdio write %d %s", args1[0], two_byte_number);
     test_mdio_write(command_string, args1, two_byte_number, fp, false);
 

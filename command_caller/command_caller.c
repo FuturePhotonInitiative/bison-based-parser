@@ -356,6 +356,9 @@ void call_command(command cmd) {
                 case ERROR_INVALID_PEK_IIC_READ_PAGE:
                     xil_printf("the pek read page is out of bounds\r\n");
                     break;
+                case ERROR_INVALID_CFP_PORT:
+                    xil_printf("the CFP port entered is not available for this command");
+                    break;
                 case ERROR_INVALID_CFP_MDIO_ADDRESS:
                     print("The address entered is out of range\r\n");
 		            print("Valid range for CFP memory addresses is [0:31]\r\n");
