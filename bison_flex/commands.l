@@ -4,12 +4,12 @@
 %option noinput
 %{
 #include "parse_types.h"
-#include "parser.h"
+#include "parse_codes.h"
 
 #ifndef LOCAL
-#include "y.tab.h"
+#include "parser.h"
 #else
-#include "y.tab_test.h"
+#include "parser_test.h"
 #endif
 
 #include <stdlib.h>
@@ -74,17 +74,53 @@ buttons     { yylval.command_code = VCU108_PORT_BUTTONS; return VCU108_PORT; }
 
 switches    { yylval.command_code = VCU108_PORT_SWITCHES; return VCU108_PORT; }
 
-prg_cntl1   { yylval.command_code = CFP_PORT_PRG_CNTL1; return CFP_PORT; }
 
-prg_cntl2   { yylval.command_code = CFP_PORT_PRG_CNTL2; return CFP_PORT; }
+prg_cntl1 {
+    yylval.command_code = CFP_PORT_PRG_CNTL1;
+    return CFP_PORT;
+}
+prg_cntl2 {
+    yylval.command_code = CFP_PORT_PRG_CNTL2;
+    return CFP_PORT;
+}
+prg_cntl3 {
+    yylval.command_code = CFP_PORT_PRG_CNTL3;
+    return CFP_PORT;
+}
+tx_dis {
+    yylval.command_code = CFP_PORT_TX_DIS;
+    return CFP_PORT;
+}
+mod_lopwr {
+    yylval.command_code = CFP_PORT_MOD_LOPWR;
+    return CFP_PORT;
+}
+mod_rstn {
+    yylval.command_code = CFP_PORT_MOD_RSTN;
+    return CFP_PORT;
+}
+prg_alrm1 {
+    yylval.command_code = CFP_PORT_PRG_ALRM1;
+    return CFP_PORT;
+}
+prg_alrm2 {
+    yylval.command_code = CFP_PORT_PRG_ALRM2;
+    return CFP_PORT;
+}
+prg_alrm3 {
+    yylval.command_code = CFP_PORT_PRG_ALRM3;
+    return CFP_PORT;
+}
+rx_los {
+    yylval.command_code = CFP_PORT_RX_LOS;
+    return CFP_PORT;
+}
+mod_abs {
+    yylval.command_code = CFP_PORT_MOD_ABS;
+    return CFP_PORT;
+}
 
-prg_cntl3   { yylval.command_code = CFP_PORT_PRG_CNTL3; return CFP_PORT; }
 
-tx_dis      { yylval.command_code = CFP_PORT_TX_DIS; return CFP_PORT; }
-
-mod_lopwr   { yylval.command_code = CFP_PORT_MOD_LOPWR; return CFP_PORT; }
-
-mod_rstn    { yylval.command_code = CFP_PORT_MOD_RSTN; return CFP_PORT; }
 
 [0-9]+ { 
     long parsed_num = strtol(yytext, NULL, 10);

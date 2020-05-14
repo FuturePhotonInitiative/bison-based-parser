@@ -1,7 +1,10 @@
-#include "parser.h"
+#include "bison_flex/parse_codes.h"
 #include <stdio.h>
-#include <string.h>
 
+/**
+ * A repl to test a command entered and show the parsing debug print output
+ * Press ctrl + C to exit
+ */
 int main() {
 
     for (;;) {

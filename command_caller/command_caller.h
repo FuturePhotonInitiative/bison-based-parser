@@ -10,7 +10,7 @@
 #ifndef COMMAND_CALLER_H
 #define COMMAND_CALLER_H
 
-#include "parser.h"
+#include "bison_flex/parse_codes.h"
 
 void call_command(command cmd);
 

@@ -1,20 +1,20 @@
 %{
 #include "parse_types.h"
-#include "parser.h"
+#include "parse_codes.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #ifdef LOCAL
-#include "lex.yy_test.h"
+#include "lexer_test.h"
 int yydebug = 1;
 #else
-#include <xil_printf.h>
-#include "lex.yy.h"
+#include "lexer.h"
 #endif
 
 void _setupLexInput(char*);
 void _cleanupLex();
+void check_CFP_set_clear_toggle(command *, unsigned char);
 void invalidateCommand(command *, unsigned char);
 int yyerror(command*, char const *);
 %}
@@ -81,21 +81,37 @@ cfp_command:
         $$.args_len = 1;
         $$.args[0] = CFP_PORT_ALL;
     } |
+
     CFP_CMD GPIO SET CFP_PORT {
         $$.command_code = COMMAND_CFP_GPIO_SET;
-        $$.args_len = 1;
-        $$.args[0] = $4;
+        check_CFP_set_clear_toggle(&$$, $4);
     } |
+    CFP_CMD GPIO SET ALL_PORT {
+        $$.command_code = COMMAND_CFP_GPIO_SET;
+        $$.args_len = 1;
+        $$.args[0] = CFP_PORT_ALL;
+    } |
+
     CFP_CMD GPIO CLEAR CFP_PORT {
         $$.command_code = COMMAND_CFP_GPIO_CLEAR;
-        $$.args_len = 1;
-        $$.args[0] = $4;
+        check_CFP_set_clear_toggle(&$$, $4);
     } |
+    CFP_CMD GPIO CLEAR ALL_PORT {
+        $$.command_code = COMMAND_CFP_GPIO_CLEAR;
+        $$.args_len = 1;
+        $$.args[0] = CFP_PORT_ALL;
+    } |
+
     CFP_CMD GPIO TOGGLE CFP_PORT {
         $$.command_code = COMMAND_CFP_GPIO_TOGGLE;
-        $$.args_len = 1;
-        $$.args[0] = $4;
+        check_CFP_set_clear_toggle(&$$, $4);
     } |
+    CFP_CMD GPIO TOGGLE ALL_PORT {
+        $$.command_code = COMMAND_CFP_GPIO_TOGGLE;
+        $$.args_len = 1;
+        $$.args[0] = CFP_PORT_ALL;
+    } |
+
     CFP_CMD GPIO DEBUG {
         $$.command_code = COMMAND_CFP_GPIO_DEBUG;
         $$.args_len = 0;
@@ -587,6 +603,21 @@ pek_command:
     };
 
 %%
+void check_CFP_set_clear_toggle(command *val, unsigned char port) {
+    switch (port) {
+        case CFP_PORT_PRG_CNTL1:
+        case CFP_PORT_PRG_CNTL2:
+        case CFP_PORT_PRG_CNTL3:
+        case CFP_PORT_TX_DIS:
+        case CFP_PORT_MOD_LOPWR:
+        case CFP_PORT_MOD_RSTN:
+            val->args_len = 1;
+            val->args[0] = port;
+            break;
+        default:
+            invalidateCommand(val, ERROR_INVALID_CFP_PORT);
+    }
+}
 
 /**
  * A helper function for invalidating a command.
@@ -603,7 +634,9 @@ void invalidateCommand(command *val, unsigned char error_code) {
 /**
  * I believe this function is for if there is no rule for the given set of tokens
  * The structure of an error command struct will be the the command code as COMMAND_INVALID,
- * the first argument being the error code defined in parser.h, and the other arguments
+ * the first argument being the error code defined in parse_codes.h, and the
+ other
+ arguments
  * being characters of the msg
  * 
  * @param val the command struct to populate
